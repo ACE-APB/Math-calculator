@@ -1,0 +1,42 @@
+# Node.js
+node_modules/
+npm-debug.log*
+package-lock.json
+yarn.lock
+
+# Electron 构建
+dist/
+out/
+release/
+
+# C++ 编译
+*.exe
+*.o
+*.obj
+*.dll
+*.so
+*.dylib
+
+# 系统文件
+.DS_Store
+Thumbs.db
+desktop.ini
+ehthumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+*.user
+*.suo
+
+# 环境变量
+.env
+.env.local
+.env.*.local
+
+# 日志
+logs/
+*.log

@@ -1,0 +1,160 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.container {
+    background: white;
+    border-radius: 20px;
+    padding: 40px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    max-width: 600px;
+    width: 100%;
+}
+
+h1 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 30px;
+    font-size: 28px;
+}
+
+.menu {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.menu-btn {
+    padding: 15px;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s;
+    background: #f0f0f0;
+    color: #333;
+}
+
+.menu-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+.menu-btn.active {
+    background: #667eea;
+    color: white;
+}
+
+.content {
+    min-height: 280px;
+}
+
+.input-group {
+    margin-bottom: 15px;
+}
+
+label {
+    display: block;
+    margin-bottom: 5px;
+    color: #555;
+    font-weight: 500;
+}
+
+input, textarea {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 16px;
+    transition: border-color 0.3s;
+}
+
+input:focus, textarea:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+textarea {
+    height: 80px;
+    resize: vertical;
+    font-family: 'Courier New', monospace;
+}
+
+.calc-btn {
+    width: 100%;
+    padding: 12px;
+    background: #667eea;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.calc-btn:hover {
+    background: #5a67d8;
+}
+
+.result-box {
+    margin-top: 20px;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    min-height: 60px;
+}
+
+.result-box .label {
+    color: #888;
+    font-size: 14px;
+    margin-bottom: 5px;
+}
+
+.result-box .value {
+    font-size: 24px;
+    font-weight: bold;
+    color: #333;
+    word-break: break-all;
+}
+
+.result-box .error {
+    color: #ff6b6b;
+}
+
+.help-text {
+    margin-top: 15px;
+    padding: 15px;
+    background: #fff3cd;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #856404;
+}
+
+.hidden {
+    display: none;
+}
+
+.status-bar {
+    margin-top: 20px;
+    padding: 10px;
+    background: #e8f5e9;
+    border-radius: 8px;
+    text-align: center;
+    color: #2e7d32;
+    font-size: 14px;
+}
