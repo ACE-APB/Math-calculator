@@ -13,7 +13,8 @@
         <div class="menu">
             <button class="menu-btn active" data-mode="gcd">📐 GCD</button>
             <button class="menu-btn" data-mode="lcm">📏 LCM</button>
-            <button class="menu-btn" data-mode="calc">🔢 计算器</button>
+            <button class="menu-btn" data-mode="prime">🔢 质数</button>
+            <button class="menu-btn" data-mode="calc">🧮 计算器</button>
         </div>
         
         <div class="content">
@@ -33,6 +34,19 @@
                     <input type="text" id="lcmInput" placeholder="例如：3 4 5" value="3 4 5">
                 </div>
                 <button class="calc-btn" onclick="calculateLCM()">计算最小公倍数</button>
+            </div>
+            
+            <!-- 质数模式 -->
+            <div id="primeMode" class="mode-content hidden">
+                <div class="input-group">
+                    <label>请输入整数（用空格分隔）：</label>
+                    <input type="text" id="primeInput" placeholder="例如：7 11 13 4" value="7 11 13 4">
+                </div>
+                <button class="calc-btn" onclick="calculatePrime()">判断质数</button>
+                <div class="help-text">
+                    💡 单个数字：判断是否为质数<br>
+                    多个数字：筛选出其中的质数
+                </div>
             </div>
             
             <!-- 计算器模式 -->
@@ -56,7 +70,7 @@
         </div>
         
         <div class="status-bar" id="statusBar">
-            ✅ 就绪 | 使用 C++ 后端引擎
+            ✅ 就绪 | 使用 JavaScript 引擎（C++ 后端未连接则自动降级）
         </div>
     </div>
 
