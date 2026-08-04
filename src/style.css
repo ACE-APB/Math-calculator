@@ -19,7 +19,7 @@ body {
     border-radius: 20px;
     padding: 40px;
     box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-    max-width: 650px;
+    max-width: 700px;
     width: 100%;
 }
 
@@ -32,16 +32,16 @@ h1 {
 
 .menu {
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr 1fr;
-    gap: 8px;
+    grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+    gap: 6px;
     margin-bottom: 20px;
 }
 
 .menu-btn {
-    padding: 12px 8px;
+    padding: 10px 6px;
     border: none;
     border-radius: 10px;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: bold;
     cursor: pointer;
     transition: all 0.3s;
@@ -117,6 +117,8 @@ textarea {
     background: #f8f9fa;
     border-radius: 10px;
     min-height: 60px;
+    max-height: 400px;
+    overflow-y: auto;
 }
 
 .result-box .label {
@@ -126,10 +128,12 @@ textarea {
 }
 
 .result-box .value {
-    font-size: 24px;
+    font-size: 18px;
     font-weight: bold;
     color: #333;
     word-break: break-all;
+    white-space: pre-wrap;
+    font-family: 'Courier New', monospace;
 }
 
 .result-box .value.prime-true {
@@ -167,16 +171,8 @@ textarea {
     font-size: 14px;
 }
 
-/* 响应式 */
 @media (max-width: 500px) {
-    .container {
-        padding: 20px;
-    }
-    .menu {
-        grid-template-columns: 1fr 1fr;
-    }
-    .menu-btn {
-        padding: 10px;
-        font-size: 13px;
-    }
+    .container { padding: 20px; }
+    .menu { grid-template-columns: 1fr 1fr 1fr; }
+    .menu-btn { padding: 8px; font-size: 12px; }
 }
