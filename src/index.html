@@ -14,6 +14,7 @@
             <button class="menu-btn active" data-mode="gcd">📐 GCD</button>
             <button class="menu-btn" data-mode="lcm">📏 LCM</button>
             <button class="menu-btn" data-mode="prime">🔢 质数</button>
+            <button class="menu-btn" data-mode="equation">📝 不定方程</button>
             <button class="menu-btn" data-mode="calc">🧮 计算器</button>
         </div>
         
@@ -46,6 +47,19 @@
                 <div class="help-text">
                     💡 单个数字：判断是否为质数<br>
                     多个数字：筛选出其中的质数
+                </div>
+            </div>
+            
+            <!-- 不定方程模式 -->
+            <div id="equationMode" class="mode-content hidden">
+                <div class="input-group">
+                    <label>请输入二元一次不定方程：</label>
+                    <input type="text" id="equationInput" placeholder="例如：3x + 5y = 7" value="3x + 5y = 7">
+                </div>
+                <button class="calc-btn" onclick="calculateEquation()">求解不定方程</button>
+                <div class="help-text">
+                    💡 支持格式：ax + by = c<br>
+                    示例：3x + 5y = 7, 2x - 4y = 6, x + y = 5
                 </div>
             </div>
             
