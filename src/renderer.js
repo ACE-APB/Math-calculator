@@ -29,6 +29,7 @@ function getModeName(mode) {
     const names = {
         'gcd': 'GCD 最大公约数',
         'lcm': 'LCM 最小公倍数',
+        'prime': '质数判断',
         'calc': '代数计算器'
     };
     return names[mode] || mode;
@@ -43,10 +44,10 @@ function updateStatus(message, isError = false) {
 }
 
 // 显示结果
-function showResult(value, isError = false) {
+function showResult(value, isError = false, className = '') {
     const resultDiv = document.getElementById('resultValue');
     resultDiv.textContent = value;
-    resultDiv.className = 'value' + (isError ? ' error' : '');
+    resultDiv.className = 'value' + (isError ? ' error' : '') + (className ? ' ' + className : '');
 }
 
 // 调用后端
@@ -81,6 +82,15 @@ function simulateCalculation(endpoint, data) {
         const nums = data.numbers.map(Number);
         const result = lcmMultiple(nums);
         return { success: true, result: result };
+    } else if (endpoint === 'prime') {
+        const nums = data.numbers.map(Number);
+        if (nums.length === 1) {
+            const result = isPrime(nums[0]);
+            return { success: true, result: result };
+        } else {
+            const primes = filterPrimes(nums);
+            return { success: true, result: primes };
+        }
     } else if (endpoint === 'calc') {
         try {
             const result = Function('"use strict"; return (' + data.expression + ')')();
@@ -91,7 +101,9 @@ function simulateCalculation(endpoint, data) {
     }
 }
 
-// JavaScript GCD 算法
+// ==================== JavaScript 数学函数 ====================
+
+// GCD
 function gcd(a, b) {
     a = Math.abs(a);
     b = Math.abs(b);
@@ -111,6 +123,7 @@ function gcdMultiple(nums) {
     return result;
 }
 
+// LCM
 function lcm(a, b) {
     if (a === 0 || b === 0) return 0;
     return Math.abs(a * b) / gcd(a, b);
@@ -125,12 +138,29 @@ function lcmMultiple(nums) {
     return result;
 }
 
+// 质数判断
+function isPrime(num) {
+    if (num < 2) return false;
+    if (num === 2) return true;
+    if (num % 2 === 0) return false;
+    for (let i = 3; i * i <= num; i += 2) {
+        if (num % i === 0) return false;
+    }
+    return true;
+}
+
+function filterPrimes(nums) {
+    return nums.filter(n => isPrime(n));
+}
+
+// ==================== 计算函数 ====================
+
 // 计算 GCD
 async function calculateGCD() {
     const input = document.getElementById('gcdInput').value;
     const numbers = input.trim().split(/\s+/).map(Number);
     
-    if (numbers.some(isNaN)) {
+    if (numbers.some(isNaN) || numbers.length === 0) {
         showResult('请输入有效的整数！', true);
         updateStatus('输入错误', true);
         return;
@@ -153,7 +183,7 @@ async function calculateLCM() {
     const input = document.getElementById('lcmInput').value;
     const numbers = input.trim().split(/\s+/).map(Number);
     
-    if (numbers.some(isNaN)) {
+    if (numbers.some(isNaN) || numbers.length === 0) {
         showResult('请输入有效的整数！', true);
         updateStatus('输入错误', true);
         return;
@@ -164,6 +194,44 @@ async function calculateLCM() {
     const result = await callBackend('lcm', { numbers: numbers });
     if (result.success) {
         showResult(result.result);
+        updateStatus('计算完成！');
+    } else {
+        showResult('错误：' + result.error, true);
+        updateStatus('计算失败', true);
+    }
+}
+
+// 计算质数
+async function calculatePrime() {
+    const input = document.getElementById('primeInput').value;
+    const numbers = input.trim().split(/\s+/).map(Number);
+    
+    if (numbers.some(isNaN) || numbers.length === 0) {
+        showResult('请输入有效的整数！', true);
+        updateStatus('输入错误', true);
+        return;
+    }
+    
+    updateStatus('正在判断质数...');
+    
+    const result = await callBackend('prime', { numbers: numbers });
+    if (result.success) {
+        if (numbers.length === 1) {
+            // 单个数字
+            if (result.result === true) {
+                showResult('✅ ' + numbers[0] + ' 是质数', false, 'prime-true');
+            } else {
+                showResult('❌ ' + numbers[0] + ' 不是质数', false, 'prime-false');
+            }
+        } else {
+            // 多个数字：显示质数列表
+            const primes = result.result;
+            if (primes.length === 0) {
+                showResult('这些数中没有质数 😅');
+            } else {
+                showResult('质数：' + primes.join(', ') + ' ✅');
+            }
+        }
         updateStatus('计算完成！');
     } else {
         showResult('错误：' + result.error, true);
@@ -200,14 +268,33 @@ async function calculateExpression() {
     }
 }
 
-// 事件绑定 - 点击切换模式
+// 事件绑定
 document.querySelectorAll('.menu-btn').forEach(btn => {
     btn.addEventListener('click', function() {
         switchMode(this.dataset.mode);
     });
 });
 
-// 初始化
+// 支持回车键
 document.addEventListener('DOMContentLoaded', function() {
-    updateStatus('就绪，使用 C++ 后端引擎（未连接则自动使用JS引擎）');
+    // GCD 输入框回车
+    document.getElementById('gcdInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') calculateGCD();
+    });
+    // LCM 输入框回车
+    document.getElementById('lcmInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') calculateLCM();
+    });
+    // Prime 输入框回车
+    document.getElementById('primeInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') calculatePrime();
+    });
+    // 计算器输入框 Ctrl+Enter
+    document.getElementById('calcInput').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+            calculateExpression();
+        }
+    });
+    
+    updateStatus('就绪 | 使用 JavaScript 引擎（C++ 后端未连接则自动降级）');
 });
