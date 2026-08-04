@@ -19,7 +19,7 @@ body {
     border-radius: 20px;
     padding: 40px;
     box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-    max-width: 600px;
+    max-width: 650px;
     width: 100%;
 }
 
@@ -32,16 +32,16 @@ h1 {
 
 .menu {
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 10px;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    gap: 8px;
     margin-bottom: 20px;
 }
 
 .menu-btn {
-    padding: 15px;
+    padding: 12px 8px;
     border: none;
     border-radius: 10px;
-    font-size: 16px;
+    font-size: 14px;
     font-weight: bold;
     cursor: pointer;
     transition: all 0.3s;
@@ -60,7 +60,7 @@ h1 {
 }
 
 .content {
-    min-height: 280px;
+    min-height: 260px;
 }
 
 .input-group {
@@ -132,6 +132,14 @@ textarea {
     word-break: break-all;
 }
 
+.result-box .value.prime-true {
+    color: #2e7d32;
+}
+
+.result-box .value.prime-false {
+    color: #c62828;
+}
+
 .result-box .error {
     color: #ff6b6b;
 }
@@ -157,4 +165,18 @@ textarea {
     text-align: center;
     color: #2e7d32;
     font-size: 14px;
+}
+
+/* 响应式 */
+@media (max-width: 500px) {
+    .container {
+        padding: 20px;
+    }
+    .menu {
+        grid-template-columns: 1fr 1fr;
+    }
+    .menu-btn {
+        padding: 10px;
+        font-size: 13px;
+    }
 }
