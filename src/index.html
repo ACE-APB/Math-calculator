@@ -19,7 +19,7 @@
         </div>
         
         <div class="content">
-            <!-- GCD模式 -->
+            <!-- GCD -->
             <div id="gcdMode" class="mode-content">
                 <div class="input-group">
                     <label>请输入整数（用空格分隔）：</label>
@@ -28,7 +28,7 @@
                 <button class="calc-btn" onclick="calculateGCD()">计算最大公约数</button>
             </div>
             
-            <!-- LCM模式 -->
+            <!-- LCM -->
             <div id="lcmMode" class="mode-content hidden">
                 <div class="input-group">
                     <label>请输入整数（用空格分隔）：</label>
@@ -37,55 +37,43 @@
                 <button class="calc-btn" onclick="calculateLCM()">计算最小公倍数</button>
             </div>
             
-            <!-- 质数模式 -->
+            <!-- 质数 -->
             <div id="primeMode" class="mode-content hidden">
                 <div class="input-group">
                     <label>请输入整数（用空格分隔）：</label>
                     <input type="text" id="primeInput" placeholder="例如：7 11 13 4" value="7 11 13 4">
                 </div>
                 <button class="calc-btn" onclick="calculatePrime()">判断质数</button>
-                <div class="help-text">
-                    💡 单个数字：判断是否为质数<br>
-                    多个数字：筛选出其中的质数
-                </div>
+                <div class="help-text">💡 单个数字：判断是否为质数<br>多个数字：筛选出其中的质数</div>
             </div>
             
-            <!-- 不定方程模式 -->
+            <!-- 不定方程 -->
             <div id="equationMode" class="mode-content hidden">
                 <div class="input-group">
                     <label>请输入二元一次不定方程：</label>
                     <input type="text" id="equationInput" placeholder="例如：3x + 5y = 7" value="3x + 5y = 7">
                 </div>
                 <button class="calc-btn" onclick="calculateEquation()">求解不定方程</button>
-                <div class="help-text">
-                    💡 支持格式：ax + by = c<br>
-                    示例：3x + 5y = 7, 2x - 4y = 6, x + y = 5
-                </div>
+                <div class="help-text">💡 支持格式：ax + by = c<br>示例：3x + 5y = 7, 2x - 4y = 6</div>
             </div>
             
-            <!-- 计算器模式 -->
+            <!-- 计算器 -->
             <div id="calcMode" class="mode-content hidden">
                 <div class="input-group">
                     <label>请输入数学表达式：</label>
-                    <textarea id="calcInput" placeholder="例如：3 + 5 * 2&#10;(2 + 3) * 4&#10;-3.5 + 2.5">3 + 5 * 2</textarea>
+                    <textarea id="calcInput" placeholder="例如：3 + 5 * 2">3 + 5 * 2</textarea>
                 </div>
                 <button class="calc-btn" onclick="calculateExpression()">计算</button>
-                <div class="help-text">
-                    💡 支持：+ - * / ( ) 小数 负数<br>
-                    示例：3+5*2, (2+3)*4, -3.5+2.5
-                </div>
+                <div class="help-text">💡 支持：+ - * / ( ) 小数 负数</div>
             </div>
         </div>
         
-        <!-- 结果显示 -->
         <div class="result-box">
             <div class="label">计算结果</div>
             <div class="value" id="resultValue">等待计算...</div>
         </div>
         
-        <div class="status-bar" id="statusBar">
-            ✅ 就绪 | 使用 JavaScript 引擎（C++ 后端未连接则自动降级）
-        </div>
+        <div class="status-bar" id="statusBar">✅ 就绪</div>
     </div>
 
     <script src="renderer.js"></script>
