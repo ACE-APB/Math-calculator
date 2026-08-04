@@ -60,6 +60,38 @@ int lcmMultiple(const vector<int>& numbers) {
     return static_cast<int>(result);
 }
 
+// ==================== 质数判断 ====================
+
+bool is_prime(int a) {
+    if (a < 2) return false;      // 0, 1, 负数都不是质数
+    if (a == 2) return true;      // 2 是质数
+    if (a % 2 == 0) return false; // 偶数不是质数
+    
+    for (int i = 3; i * i <= a; i += 2) {
+        if (a % i == 0) return false;
+    }
+    return true;
+}
+
+// 判断多个数是否都是质数
+bool areAllPrime(const vector<int>& numbers) {
+    for (int num : numbers) {
+        if (!is_prime(num)) return false;
+    }
+    return true;
+}
+
+// 筛选出质数
+vector<int> filterPrimes(const vector<int>& numbers) {
+    vector<int> primes;
+    for (int num : numbers) {
+        if (is_prime(num)) {
+            primes.push_back(num);
+        }
+    }
+    return primes;
+}
+
 // ==================== 表达式求值 ====================
 
 int getPriority(char op) {
@@ -179,6 +211,37 @@ string createJsonResponse(bool success, double result, const string& error = "")
     return ss.str();
 }
 
+string createJsonResponseBool(bool success, bool result, const string& error = "") {
+    stringstream ss;
+    ss << "{";
+    ss << "\"success\":" << (success ? "true" : "false") << ",";
+    if (success) {
+        ss << "\"result\":" << (result ? "true" : "false");
+    } else {
+        ss << "\"error\":\"" << error << "\"";
+    }
+    ss << "}";
+    return ss.str();
+}
+
+string createJsonResponseArray(bool success, const vector<int>& result, const string& error = "") {
+    stringstream ss;
+    ss << "{";
+    ss << "\"success\":" << (success ? "true" : "false") << ",";
+    if (success) {
+        ss << "\"result\":[";
+        for (size_t i = 0; i < result.size(); ++i) {
+            if (i > 0) ss << ",";
+            ss << result[i];
+        }
+        ss << "]";
+    } else {
+        ss << "\"error\":\"" << error << "\"";
+    }
+    ss << "}";
+    return ss.str();
+}
+
 vector<int> parseNumbers(const string& json) {
     vector<int> numbers;
     size_t pos = json.find("[");
@@ -266,10 +329,33 @@ int main() {
         }
     });
 
+    // Prime API - 判断是否为质数
+    svr.Post("/prime", [](const httplib::Request& req, httplib::Response& res) {
+        try {
+            vector<int> numbers = parseNumbers(req.body);
+            if (numbers.empty()) {
+                res.set_content(createJsonResponse(false, 0, "未输入数字"), "application/json");
+                return;
+            }
+            // 如果只有一个数，判断它是否为质数
+            if (numbers.size() == 1) {
+                bool result = is_prime(numbers[0]);
+                res.set_content(createJsonResponseBool(true, result), "application/json");
+            } else {
+                // 多个数：返回所有质数
+                vector<int> primes = filterPrimes(numbers);
+                res.set_content(createJsonResponseArray(true, primes), "application/json");
+            }
+        } catch (const exception& e) {
+            res.set_content(createJsonResponse(false, 0, e.what()), "application/json");
+        }
+    });
+
     cout << "🚀 C++ Math Server running on http://localhost:8080" << endl;
     cout << "📐 GCD API: POST /gcd" << endl;
     cout << "📏 LCM API: POST /lcm" << endl;
     cout << "🔢 Calculator API: POST /calc" << endl;
+    cout << "🔢 Prime API: POST /prime" << endl;
     cout << "Press Ctrl+C to stop" << endl;
 
     svr.listen("localhost", 8080);
