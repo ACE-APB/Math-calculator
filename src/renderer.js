@@ -1,41 +1,23 @@
 let currentMode = 'gcd';
 
-// 切换模式
 function switchMode(mode) {
     currentMode = mode;
-    
-    // 更新按钮状态
     document.querySelectorAll('.menu-btn').forEach(btn => {
         btn.classList.remove('active');
-        if (btn.dataset.mode === mode) {
-            btn.classList.add('active');
-        }
+        if (btn.dataset.mode === mode) btn.classList.add('active');
     });
-    
-    // 显示对应的内容
-    document.querySelectorAll('.mode-content').forEach(el => {
-        el.classList.add('hidden');
-    });
+    document.querySelectorAll('.mode-content').forEach(el => el.classList.add('hidden'));
     document.getElementById(mode + 'Mode').classList.remove('hidden');
-    
-    // 清空结果
     document.getElementById('resultValue').textContent = '等待计算...';
     document.getElementById('resultValue').className = 'value';
-    
     updateStatus('切换到 ' + getModeName(mode));
 }
 
 function getModeName(mode) {
-    const names = {
-        'gcd': 'GCD 最大公约数',
-        'lcm': 'LCM 最小公倍数',
-        'prime': '质数判断',
-        'calc': '代数计算器'
-    };
+    const names = { 'gcd': 'GCD', 'lcm': 'LCM', 'prime': '质数', 'equation': '不定方程', 'calc': '计算器' };
     return names[mode] || mode;
 }
 
-// 更新状态栏
 function updateStatus(message, isError = false) {
     const status = document.getElementById('statusBar');
     status.textContent = '🔄 ' + message;
@@ -43,54 +25,44 @@ function updateStatus(message, isError = false) {
     status.style.color = isError ? '#c62828' : '#2e7d32';
 }
 
-// 显示结果
 function showResult(value, isError = false, className = '') {
     const resultDiv = document.getElementById('resultValue');
     resultDiv.textContent = value;
     resultDiv.className = 'value' + (isError ? ' error' : '') + (className ? ' ' + className : '');
 }
 
-// 调用后端
+// ==================== 后端调用 ====================
 async function callBackend(endpoint, data) {
     try {
         const response = await fetch('http://localhost:8080/' + endpoint, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
         });
-        
-        if (!response.ok) {
-            throw new Error('HTTP ' + response.status);
-        }
-        
+        if (!response.ok) throw new Error('HTTP ' + response.status);
         return await response.json();
     } catch (error) {
-        console.log('C++后端未连接，使用JavaScript引擎');
         return simulateCalculation(endpoint, data);
     }
 }
 
-// JavaScript 模拟计算（备用引擎）
 function simulateCalculation(endpoint, data) {
     if (endpoint === 'gcd') {
         const nums = data.numbers.map(Number);
-        const result = gcdMultiple(nums);
-        return { success: true, result: result };
+        return { success: true, result: gcdMultiple(nums) };
     } else if (endpoint === 'lcm') {
         const nums = data.numbers.map(Number);
-        const result = lcmMultiple(nums);
-        return { success: true, result: result };
+        return { success: true, result: lcmMultiple(nums) };
     } else if (endpoint === 'prime') {
         const nums = data.numbers.map(Number);
         if (nums.length === 1) {
-            const result = isPrime(nums[0]);
-            return { success: true, result: result };
+            return { success: true, result: isPrime(nums[0]) };
         } else {
-            const primes = filterPrimes(nums);
-            return { success: true, result: primes };
+            return { success: true, result: filterPrimes(nums) };
         }
+    } else if (endpoint === 'equation') {
+        const result = solveEquation(data.a, data.b, data.c);
+        return { success: true, ...result };
     } else if (endpoint === 'calc') {
         try {
             const result = Function('"use strict"; return (' + data.expression + ')')();
@@ -101,15 +73,10 @@ function simulateCalculation(endpoint, data) {
     }
 }
 
-// ==================== JavaScript 数学函数 ====================
-
-// GCD
+// ==================== GCD ====================
 function gcd(a, b) {
-    a = Math.abs(a);
-    b = Math.abs(b);
-    while (b !== 0) {
-        [a, b] = [b, a % b];
-    }
+    a = Math.abs(a); b = Math.abs(b);
+    while (b !== 0) { [a, b] = [b, a % b]; }
     return a;
 }
 
@@ -123,7 +90,7 @@ function gcdMultiple(nums) {
     return result;
 }
 
-// LCM
+// ==================== LCM ====================
 function lcm(a, b) {
     if (a === 0 || b === 0) return 0;
     return Math.abs(a * b) / gcd(a, b);
@@ -138,7 +105,7 @@ function lcmMultiple(nums) {
     return result;
 }
 
-// 质数判断
+// ==================== 质数 ====================
 function isPrime(num) {
     if (num < 2) return false;
     if (num === 2) return true;
@@ -153,84 +120,87 @@ function filterPrimes(nums) {
     return nums.filter(n => isPrime(n));
 }
 
-// ==================== 计算函数 ====================
+// ==================== 不定方程 ====================
+function exgcd(a, b) {
+    if (b === 0) {
+        return { gcd: Math.abs(a), x: 1, y: 0 };
+    }
+    const result = exgcd(b, a % b);
+    return {
+        gcd: result.gcd,
+        x: result.y,
+        y: result.x - Math.floor(a / b) * result.y
+    };
+}
 
-// 计算 GCD
+function solveEquation(a, b, c) {
+    if (a === 0 && b === 0) {
+        if (c === 0) return { hasSolution: true, message: '方程有无数解' };
+        return { hasSolution: false, message: '方程无解' };
+    }
+    if (a === 0) {
+        if (c % b === 0) return { hasSolution: true, x0: 0, y0: c / b, gcd: Math.abs(b), a: a, b: b, c: c };
+        return { hasSolution: false, message: '方程无解（b 不能整除 c）' };
+    }
+    if (b === 0) {
+        if (c % a === 0) return { hasSolution: true, x0: c / a, y0: 0, gcd: Math.abs(a), a: a, b: b, c: c };
+        return { hasSolution: false, message: '方程无解（a 不能整除 c）' };
+    }
+    let absA = Math.abs(a), absB = Math.abs(b);
+    let result = exgcd(absA, absB);
+    let gcd = result.gcd;
+    if (c % gcd !== 0) {
+        return { hasSolution: false, message: '方程无解（' + c + ' 不能被 ' + gcd + ' 整除）' };
+    }
+    let x = result.x, y = result.y;
+    if (a < 0) x = -x;
+    if (b < 0) y = -y;
+    return { hasSolution: true, x0: x * (c / gcd), y0: y * (c / gcd), gcd: gcd, a: a, b: b, c: c };
+}
+
+// ==================== 计算函数 ====================
 async function calculateGCD() {
     const input = document.getElementById('gcdInput').value;
     const numbers = input.trim().split(/\s+/).map(Number);
-    
     if (numbers.some(isNaN) || numbers.length === 0) {
         showResult('请输入有效的整数！', true);
-        updateStatus('输入错误', true);
         return;
     }
-    
     updateStatus('正在计算 GCD...');
-    
     const result = await callBackend('gcd', { numbers: numbers });
-    if (result.success) {
-        showResult(result.result);
-        updateStatus('计算完成！');
-    } else {
-        showResult('错误：' + result.error, true);
-        updateStatus('计算失败', true);
-    }
+    if (result.success) { showResult(result.result); updateStatus('计算完成！'); }
+    else { showResult('错误：' + result.error, true); updateStatus('计算失败', true); }
 }
 
-// 计算 LCM
 async function calculateLCM() {
     const input = document.getElementById('lcmInput').value;
     const numbers = input.trim().split(/\s+/).map(Number);
-    
     if (numbers.some(isNaN) || numbers.length === 0) {
         showResult('请输入有效的整数！', true);
-        updateStatus('输入错误', true);
         return;
     }
-    
     updateStatus('正在计算 LCM...');
-    
     const result = await callBackend('lcm', { numbers: numbers });
-    if (result.success) {
-        showResult(result.result);
-        updateStatus('计算完成！');
-    } else {
-        showResult('错误：' + result.error, true);
-        updateStatus('计算失败', true);
-    }
+    if (result.success) { showResult(result.result); updateStatus('计算完成！'); }
+    else { showResult('错误：' + result.error, true); updateStatus('计算失败', true); }
 }
 
-// 计算质数
 async function calculatePrime() {
     const input = document.getElementById('primeInput').value;
     const numbers = input.trim().split(/\s+/).map(Number);
-    
     if (numbers.some(isNaN) || numbers.length === 0) {
         showResult('请输入有效的整数！', true);
-        updateStatus('输入错误', true);
         return;
     }
-    
     updateStatus('正在判断质数...');
-    
     const result = await callBackend('prime', { numbers: numbers });
     if (result.success) {
         if (numbers.length === 1) {
-            // 单个数字
-            if (result.result === true) {
-                showResult('✅ ' + numbers[0] + ' 是质数', false, 'prime-true');
-            } else {
-                showResult('❌ ' + numbers[0] + ' 不是质数', false, 'prime-false');
-            }
+            showResult(result.result ? '✅ ' + numbers[0] + ' 是质数' : '❌ ' + numbers[0] + ' 不是质数',
+                false, result.result ? 'prime-true' : 'prime-false');
         } else {
-            // 多个数字：显示质数列表
             const primes = result.result;
-            if (primes.length === 0) {
-                showResult('这些数中没有质数 😅');
-            } else {
-                showResult('质数：' + primes.join(', ') + ' ✅');
-            }
+            showResult(primes.length === 0 ? '这些数中没有质数 😅' : '质数：' + primes.join(', ') + ' ✅');
         }
         updateStatus('计算完成！');
     } else {
@@ -239,28 +209,86 @@ async function calculatePrime() {
     }
 }
 
-// 计算表达式
+function formatEquationResult(result) {
+    if (!result.hasSolution) return '❌ ' + result.message;
+    if (result.message) return result.message;
+    let a = result.a, b = result.b, c = result.c;
+    let x0 = result.x0, y0 = result.y0, gcd = result.gcd;
+    let output = '📐 方程：' + a + 'x + ' + b + 'y = ' + c + '\n';
+    output += '🔢 gcd(' + a + ', ' + b + ') = ' + gcd + '\n\n';
+    output += '📌 特解：\n  x₀ = ' + x0 + '\n  y₀ = ' + y0 + '\n\n';
+    output += '✅ 验证：\n  ' + a + '×' + x0 + ' + ' + b + '×' + y0 + ' = ' + (a*x0 + b*y0) + '\n\n';
+    let t1 = b / gcd, t2 = a / gcd;
+    if (t1 < 0) { t1 = -t1; t2 = -t2; }
+    output += '📝 通解：\n  x = ' + x0 + ' + ' + t1 + 't\n  y = ' + y0 + ' - ' + t2 + 't\n  其中 t 为任意整数\n\n';
+    output += '📊 几组具体解：\n';
+    for (let t = -3; t <= 3; t++) {
+        let x = x0 + t1 * t, y = y0 - t2 * t;
+        output += '  t=' + t + ': x=' + x + ', y=' + y;
+        output += '  ✅ ' + a + '×' + x + ' + ' + b + '×' + y + ' = ' + (a*x + b*y) + '\n';
+    }
+    return output;
+}
+
+async function calculateEquation() {
+    const input = document.getElementById('equationInput').value.trim();
+    if (!input) { showResult('请输入方程！', true); return; }
+    updateStatus('正在求解不定方程...');
+    try {
+        // 解析方程
+        let s = input.replace(/\s/g, '');
+        let eqPos = s.indexOf('=');
+        if (eqPos === -1) throw new Error('未找到 "=" 符号');
+        let left = s.substring(0, eqPos), right = s.substring(eqPos + 1);
+        let c = parseInt(right);
+        if (isNaN(c)) throw new Error('等号右侧不是整数');
+        let terms = [], current = '';
+        for (let i = 0; i < left.length; i++) {
+            let ch = left[i];
+            if ((ch === '+' || ch === '-') && i > 0) { terms.push(current); current = ch; }
+            else current += ch;
+        }
+        if (current) terms.push(current);
+        if (terms.length === 0) terms = [left];
+        let a = 0, b = 0;
+        for (let term of terms) {
+            let xPos = term.indexOf('x'), yPos = term.indexOf('y');
+            if (xPos !== -1) {
+                let coefStr = term.substring(0, xPos);
+                if (coefStr === '' || coefStr === '+') a = 1;
+                else if (coefStr === '-') a = -1;
+                else a = parseInt(coefStr);
+                if (isNaN(a)) throw new Error('x 的系数无效');
+            } else if (yPos !== -1) {
+                let coefStr = term.substring(0, yPos);
+                if (coefStr === '' || coefStr === '+') b = 1;
+                else if (coefStr === '-') b = -1;
+                else b = parseInt(coefStr);
+                if (isNaN(b)) throw new Error('y 的系数无效');
+            }
+        }
+        const result = await callBackend('equation', { a: a, b: b, c: c });
+        if (result.success) {
+            showResult(formatEquationResult(result));
+            updateStatus('求解完成！');
+        } else {
+            showResult('错误：' + result.error, true);
+            updateStatus('求解失败', true);
+        }
+    } catch (error) {
+        showResult('解析错误：' + error.message, true);
+        updateStatus('解析失败', true);
+    }
+}
+
 async function calculateExpression() {
     const expression = document.getElementById('calcInput').value.trim();
-    
-    if (!expression) {
-        showResult('请输入表达式！', true);
-        updateStatus('输入错误', true);
-        return;
-    }
-    
+    if (!expression) { showResult('请输入表达式！', true); return; }
     updateStatus('正在计算表达式...');
-    
     const result = await callBackend('calc', { expression: expression });
     if (result.success) {
         const value = result.result;
-        let display = value.toString();
-        if (Number.isInteger(value)) {
-            display = value.toString();
-        } else {
-            display = value.toFixed(4);
-        }
-        showResult(display);
+        showResult(Number.isInteger(value) ? value.toString() : value.toFixed(4));
         updateStatus('计算完成！');
     } else {
         showResult('错误：' + result.error, true);
@@ -268,33 +296,16 @@ async function calculateExpression() {
     }
 }
 
-// 事件绑定
+// ==================== 事件绑定 ====================
 document.querySelectorAll('.menu-btn').forEach(btn => {
-    btn.addEventListener('click', function() {
-        switchMode(this.dataset.mode);
-    });
+    btn.addEventListener('click', function() { switchMode(this.dataset.mode); });
 });
 
-// 支持回车键
 document.addEventListener('DOMContentLoaded', function() {
-    // GCD 输入框回车
-    document.getElementById('gcdInput').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') calculateGCD();
-    });
-    // LCM 输入框回车
-    document.getElementById('lcmInput').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') calculateLCM();
-    });
-    // Prime 输入框回车
-    document.getElementById('primeInput').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') calculatePrime();
-    });
-    // 计算器输入框 Ctrl+Enter
-    document.getElementById('calcInput').addEventListener('keydown', function(e) {
-        if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
-            calculateExpression();
-        }
-    });
-    
-    updateStatus('就绪 | 使用 JavaScript 引擎（C++ 后端未连接则自动降级）');
+    document.getElementById('gcdInput').addEventListener('keypress', e => { if (e.key === 'Enter') calculateGCD(); });
+    document.getElementById('lcmInput').addEventListener('keypress', e => { if (e.key === 'Enter') calculateLCM(); });
+    document.getElementById('primeInput').addEventListener('keypress', e => { if (e.key === 'Enter') calculatePrime(); });
+    document.getElementById('equationInput').addEventListener('keypress', e => { if (e.key === 'Enter') calculateEquation(); });
+    document.getElementById('calcInput').addEventListener('keydown', e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) calculateExpression(); });
+    updateStatus('就绪');
 });
