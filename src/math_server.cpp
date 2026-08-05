@@ -91,29 +91,23 @@ vector<int> filterPrimes(const vector<int>& numbers) {
 // ==================== 模幂运算 ================================
 // ================================================================
 
-// 快速幂：计算 (base^exp) % mod
-// 时间复杂度：O(log exp)
 long long fastPow(long long base, long long exp, long long mod) {
     if (mod == 1) return 0;
-    base = ((base % mod) + mod) % mod;  // 处理负数
+    base = ((base % mod) + mod) % mod;
     long long result = 1;
     while (exp > 0) {
-        if (exp & 1) {  // 如果 exp 是奇数
+        if (exp & 1) {
             result = (result * base) % mod;
         }
         base = (base * base) % mod;
-        exp >>= 1;  // exp /= 2
+        exp >>= 1;
     }
     return result;
 }
 
-// 求循环节：找到最小的 i，使得 n^i ≡ 1 (mod b)
-// 要求：gcd(n, b) = 1
-// 如果不存在，返回 -1
 long long findCycle(long long n, long long b) {
     if (b == 1) return 0;
     if (gcd(static_cast<int>(n), static_cast<int>(b)) != 1) return -1;
-    
     n = ((n % b) + b) % b;
     long long current = 1;
     for (long long i = 1; i <= b; i++) {
@@ -125,7 +119,6 @@ long long findCycle(long long n, long long b) {
     return -1;
 }
 
-// 模幂运算主函数
 long long modPow(long long n, long long m, long long b) {
     if (b == 1) return 0;
     if (m == 0) return 1 % b;
@@ -242,8 +235,6 @@ double evalExpression(const string& expr) {
 // ==================== 二元一次不定方程 ==========================
 // ================================================================
 
-// 扩展欧几里得算法
-// 求 ax + by = gcd(a, b) 的一组整数解
 int exgcd(int a, int b, int &x, int &y) {
     if (b == 0) {
         x = 1;
@@ -271,7 +262,6 @@ EquationResult solveIndefiniteEquation(int a, int b, int c) {
     result.b = b;
     result.c = c;
     
-    // 情况1：a = 0 且 b = 0
     if (a == 0 && b == 0) {
         if (c == 0) {
             result.hasSolution = true;
@@ -283,7 +273,6 @@ EquationResult solveIndefiniteEquation(int a, int b, int c) {
         return result;
     }
     
-    // 情况2：a = 0
     if (a == 0) {
         if (c % b == 0) {
             result.hasSolution = true;
@@ -297,7 +286,6 @@ EquationResult solveIndefiniteEquation(int a, int b, int c) {
         return result;
     }
     
-    // 情况3：b = 0
     if (b == 0) {
         if (c % a == 0) {
             result.hasSolution = true;
@@ -311,7 +299,6 @@ EquationResult solveIndefiniteEquation(int a, int b, int c) {
         return result;
     }
     
-    // 一般情况
     int absA = abs(a);
     int absB = abs(b);
     int x, y;
@@ -412,7 +399,6 @@ string parseExpression(const string& json) {
     return json.substr(pos, end - pos);
 }
 
-// 解析模幂参数
 bool parseModPowParams(const string& json, long long& n, long long& m, long long& b) {
     size_t nPos = json.find("\"n\":");
     size_t mPos = json.find("\"m\":");
@@ -432,7 +418,6 @@ bool parseModPowParams(const string& json, long long& n, long long& m, long long
     }
 }
 
-// 解析不定方程参数
 bool parseEquationParams(const string& json, int& a, int& b, int& c) {
     size_t aPos = json.find("\"a\":");
     size_t bPos = json.find("\"b\":");
@@ -459,14 +444,13 @@ bool parseEquationParams(const string& json, int& a, int& b, int& c) {
 int main() {
     httplib::Server svr;
 
-    // CORS支持
     svr.set_post_routing_handler([](const auto& req, auto& res) {
         res.set_header("Access-Control-Allow-Origin", "*");
         res.set_header("Access-Control-Allow-Methods", "POST, OPTIONS");
         res.set_header("Access-Control-Allow-Headers", "Content-Type");
     });
 
-    // ========== GCD API ==========
+    // GCD API
     svr.Post("/gcd", [](const httplib::Request& req, httplib::Response& res) {
         try {
             vector<int> numbers = parseNumbers(req.body);
@@ -481,7 +465,7 @@ int main() {
         }
     });
 
-    // ========== LCM API ==========
+    // LCM API
     svr.Post("/lcm", [](const httplib::Request& req, httplib::Response& res) {
         try {
             vector<int> numbers = parseNumbers(req.body);
@@ -496,7 +480,7 @@ int main() {
         }
     });
 
-    // ========== Prime API ==========
+    // Prime API
     svr.Post("/prime", [](const httplib::Request& req, httplib::Response& res) {
         try {
             vector<int> numbers = parseNumbers(req.body);
@@ -516,7 +500,7 @@ int main() {
         }
     });
 
-    // ========== ModPow API ==========
+    // ModPow API
     svr.Post("/modpow", [](const httplib::Request& req, httplib::Response& res) {
         try {
             long long n, m, b;
@@ -548,7 +532,7 @@ int main() {
         }
     });
 
-    // ========== Equation API ==========
+    // Equation API
     svr.Post("/equation", [](const httplib::Request& req, httplib::Response& res) {
         try {
             int a, b, c;
@@ -589,7 +573,7 @@ int main() {
         }
     });
 
-    // ========== Calculator API ==========
+    // Calculator API
     svr.Post("/calc", [](const httplib::Request& req, httplib::Response& res) {
         try {
             string expr = parseExpression(req.body);
@@ -604,7 +588,6 @@ int main() {
         }
     });
 
-    // ========== 服务器信息 ==========
     cout << "========================================" << endl;
     cout << "🚀 C++ Math Server v2.0" << endl;
     cout << "========================================" << endl;
