@@ -14,6 +14,7 @@
             <button class="menu-btn active" data-mode="gcd">📐 GCD</button>
             <button class="menu-btn" data-mode="lcm">📏 LCM</button>
             <button class="menu-btn" data-mode="prime">🔢 质数</button>
+            <button class="menu-btn" data-mode="modpow">⚡ 模幂</button>
             <button class="menu-btn" data-mode="equation">📝 不定方程</button>
             <button class="menu-btn" data-mode="calc">🧮 计算器</button>
         </div>
@@ -45,6 +46,25 @@
                 </div>
                 <button class="calc-btn" onclick="calculatePrime()">判断质数</button>
                 <div class="help-text">💡 单个数字：判断是否为质数<br>多个数字：筛选出其中的质数</div>
+            </div>
+            
+            <!-- 模幂 -->
+            <div id="modpowMode" class="mode-content hidden">
+                <div class="input-group">
+                    <label>计算 n^m ≡ x (mod b)</label>
+                    <div style="display: flex; gap: 8px; margin-top: 8px;">
+                        <input type="text" id="modpowN" placeholder="底数 n" value="3" style="flex:1;">
+                        <span style="align-self:center;">^</span>
+                        <input type="text" id="modpowM" placeholder="指数 m" value="5" style="flex:1;">
+                        <span style="align-self:center;">mod</span>
+                        <input type="text" id="modpowB" placeholder="模数 b" value="7" style="flex:1;">
+                    </div>
+                </div>
+                <button class="calc-btn" onclick="calculateModPow()">计算模幂</button>
+                <div class="help-text">
+                    💡 求 n 的 m 次方除以 b 的余数<br>
+                    示例：3^5 mod 7 = 5
+                </div>
             </div>
             
             <!-- 不定方程 -->
