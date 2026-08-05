@@ -11,12 +11,24 @@
         <h1>🧮 多功能数学工具</h1>
         
         <div class="menu">
-            <button class="menu-btn active" data-mode="gcd">📐 GCD</button>
-            <button class="menu-btn" data-mode="lcm">📏 LCM</button>
-            <button class="menu-btn" data-mode="prime">🔢 质数</button>
-            <button class="menu-btn" data-mode="modpow">⚡ 模幂</button>
-            <button class="menu-btn" data-mode="equation">📝 不定方程</button>
-            <button class="menu-btn" data-mode="calc">🧮 计算器</button>
+            <button class="menu-btn active" data-mode="gcd">
+                <span class="icon-math gcd">Σ</span> GCD
+            </button>
+            <button class="menu-btn" data-mode="lcm">
+                <span class="icon-math lcm">∏</span> LCM
+            </button>
+            <button class="menu-btn" data-mode="prime">
+                <span class="icon-math prime">ℙ</span> 质数
+            </button>
+            <button class="menu-btn" data-mode="modpow">
+                <span class="icon-math modpow">^</span> 模幂
+            </button>
+            <button class="menu-btn" data-mode="equation">
+                <span class="icon-math equation">≡</span> 不定方程
+            </button>
+            <button class="menu-btn" data-mode="calc">
+                <span class="icon-math calc">∫</span> 计算器
+            </button>
         </div>
         
         <div class="content">
@@ -54,17 +66,14 @@
                     <label>计算 n^m ≡ x (mod b)</label>
                     <div style="display: flex; gap: 8px; margin-top: 8px;">
                         <input type="text" id="modpowN" placeholder="底数 n" value="3" style="flex:1;">
-                        <span style="align-self:center;">^</span>
+                        <span style="align-self:center; font-weight:bold;">^</span>
                         <input type="text" id="modpowM" placeholder="指数 m" value="5" style="flex:1;">
-                        <span style="align-self:center;">mod</span>
+                        <span style="align-self:center; font-weight:bold;">mod</span>
                         <input type="text" id="modpowB" placeholder="模数 b" value="7" style="flex:1;">
                     </div>
                 </div>
                 <button class="calc-btn" onclick="calculateModPow()">计算模幂</button>
-                <div class="help-text">
-                    💡 求 n 的 m 次方除以 b 的余数<br>
-                    示例：3^5 mod 7 = 5
-                </div>
+                <div class="help-text">💡 求 n 的 m 次方除以 b 的余数<br>示例：3^5 mod 7 = 5</div>
             </div>
             
             <!-- 不定方程 -->
