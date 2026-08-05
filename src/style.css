@@ -19,7 +19,7 @@ body {
     border-radius: 20px;
     padding: 40px;
     box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-    max-width: 700px;
+    max-width: 750px;
     width: 100%;
 }
 
@@ -32,16 +32,16 @@ h1 {
 
 .menu {
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
-    gap: 6px;
+    grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr;
+    gap: 5px;
     margin-bottom: 20px;
 }
 
 .menu-btn {
-    padding: 10px 6px;
+    padding: 8px 4px;
     border: none;
-    border-radius: 10px;
-    font-size: 13px;
+    border-radius: 8px;
+    font-size: 12px;
     font-weight: bold;
     cursor: pointer;
     transition: all 0.3s;
@@ -171,8 +171,31 @@ textarea {
     font-size: 14px;
 }
 
-@media (max-width: 500px) {
+/* 模幂输入框行 */
+.modpow-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-top: 8px;
+}
+
+.modpow-row input {
+    flex: 1;
+    min-width: 0;
+}
+
+.modpow-row .operator {
+    font-size: 20px;
+    font-weight: bold;
+    color: #555;
+    padding: 0 4px;
+    white-space: nowrap;
+}
+
+@media (max-width: 600px) {
     .container { padding: 20px; }
     .menu { grid-template-columns: 1fr 1fr 1fr; }
-    .menu-btn { padding: 8px; font-size: 12px; }
+    .menu-btn { padding: 8px; font-size: 11px; }
+    .modpow-row { flex-wrap: wrap; }
+    .modpow-row input { flex: 1 1 60px; }
 }
