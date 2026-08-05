@@ -1,6 +1,7 @@
 /**
  * @file math_server.cpp
  * @brief C++ HTTP 服务器，提供数学计算API
+ * @version 2.0.0
  */
 
 #include <iostream>
@@ -17,7 +18,9 @@
 
 using namespace std;
 
-// ==================== GCD ====================
+// ================================================================
+// ==================== GCD & LCM ================================
+// ================================================================
 
 int gcd(int a, int b) {
     if (a < 0) a = -a;
@@ -60,7 +63,9 @@ int lcmMultiple(const vector<int>& numbers) {
     return static_cast<int>(result);
 }
 
-// ==================== 质数判断 ====================
+// ================================================================
+// ==================== 质数判断 ================================
+// ================================================================
 
 bool is_prime(int a) {
     if (a < 2) return false;
@@ -82,7 +87,54 @@ vector<int> filterPrimes(const vector<int>& numbers) {
     return primes;
 }
 
-// ==================== 表达式求值 ====================
+// ================================================================
+// ==================== 模幂运算 ================================
+// ================================================================
+
+// 快速幂：计算 (base^exp) % mod
+// 时间复杂度：O(log exp)
+long long fastPow(long long base, long long exp, long long mod) {
+    if (mod == 1) return 0;
+    base = ((base % mod) + mod) % mod;  // 处理负数
+    long long result = 1;
+    while (exp > 0) {
+        if (exp & 1) {  // 如果 exp 是奇数
+            result = (result * base) % mod;
+        }
+        base = (base * base) % mod;
+        exp >>= 1;  // exp /= 2
+    }
+    return result;
+}
+
+// 求循环节：找到最小的 i，使得 n^i ≡ 1 (mod b)
+// 要求：gcd(n, b) = 1
+// 如果不存在，返回 -1
+long long findCycle(long long n, long long b) {
+    if (b == 1) return 0;
+    if (gcd(static_cast<int>(n), static_cast<int>(b)) != 1) return -1;
+    
+    n = ((n % b) + b) % b;
+    long long current = 1;
+    for (long long i = 1; i <= b; i++) {
+        current = (current * n) % b;
+        if (current == 1) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+// 模幂运算主函数
+long long modPow(long long n, long long m, long long b) {
+    if (b == 1) return 0;
+    if (m == 0) return 1 % b;
+    return fastPow(n, m, b);
+}
+
+// ================================================================
+// ==================== 表达式求值 ================================
+// ================================================================
 
 int getPriority(char op) {
     switch (op) {
@@ -186,7 +238,105 @@ double evalExpression(const string& expr) {
     return numStack.top();
 }
 
-// ==================== JSON处理 ====================
+// ================================================================
+// ==================== 二元一次不定方程 ==========================
+// ================================================================
+
+// 扩展欧几里得算法
+// 求 ax + by = gcd(a, b) 的一组整数解
+int exgcd(int a, int b, int &x, int &y) {
+    if (b == 0) {
+        x = 1;
+        y = 0;
+        return a;
+    }
+    int x1, y1;
+    int gcd = exgcd(b, a % b, x1, y1);
+    x = y1;
+    y = x1 - (a / b) * y1;
+    return gcd;
+}
+
+struct EquationResult {
+    bool hasSolution;
+    int x0, y0;
+    int gcd;
+    int a, b, c;
+    string message;
+};
+
+EquationResult solveIndefiniteEquation(int a, int b, int c) {
+    EquationResult result;
+    result.a = a;
+    result.b = b;
+    result.c = c;
+    
+    // 情况1：a = 0 且 b = 0
+    if (a == 0 && b == 0) {
+        if (c == 0) {
+            result.hasSolution = true;
+            result.message = "方程有无数解（任何整数都行）";
+        } else {
+            result.hasSolution = false;
+            result.message = "方程无解";
+        }
+        return result;
+    }
+    
+    // 情况2：a = 0
+    if (a == 0) {
+        if (c % b == 0) {
+            result.hasSolution = true;
+            result.x0 = 0;
+            result.y0 = c / b;
+            result.gcd = abs(b);
+        } else {
+            result.hasSolution = false;
+            result.message = "方程无解（b 不能整除 c）";
+        }
+        return result;
+    }
+    
+    // 情况3：b = 0
+    if (b == 0) {
+        if (c % a == 0) {
+            result.hasSolution = true;
+            result.x0 = c / a;
+            result.y0 = 0;
+            result.gcd = abs(a);
+        } else {
+            result.hasSolution = false;
+            result.message = "方程无解（a 不能整除 c）";
+        }
+        return result;
+    }
+    
+    // 一般情况
+    int absA = abs(a);
+    int absB = abs(b);
+    int x, y;
+    int gcd = exgcd(absA, absB, x, y);
+    
+    if (c % gcd != 0) {
+        result.hasSolution = false;
+        result.message = "方程无解（" + to_string(c) + " 不能被 " + to_string(gcd) + " 整除）";
+        return result;
+    }
+    
+    if (a < 0) x = -x;
+    if (b < 0) y = -y;
+    
+    result.hasSolution = true;
+    result.x0 = x * (c / gcd);
+    result.y0 = y * (c / gcd);
+    result.gcd = gcd;
+    
+    return result;
+}
+
+// ================================================================
+// ==================== JSON处理 ================================
+// ================================================================
 
 string createJsonResponse(bool success, double result, const string& error = "") {
     stringstream ss;
@@ -262,188 +412,61 @@ string parseExpression(const string& json) {
     return json.substr(pos, end - pos);
 }
 
-// ================================================================
-// ==================== 🎯 二元一次不定方程 ====================
-// ================================================================
-
-// 扩展欧几里得算法：
-// 求 ax + by = gcd(a, b) 的一组整数解
-// 
-// 原理：利用欧几里得算法（辗转相除法）的逆向推导
-// 
-// 举例：求 3x + 5y = 1 的解
-// 第一步：5 = 1×3 + 2
-// 第二步：3 = 1×2 + 1
-// 第三步：2 = 2×1 + 0
-// 
-// 逆向推导：
-// 1 = 3 - 1×2
-//   = 3 - 1×(5 - 1×3)
-//   = 3 - 1×5 + 1×3
-//   = 2×3 - 1×5
-// 所以：2×3 + (-1)×5 = 1
-// 得到：x = 2, y = -1
-//
-// 参数：a, b（系数），x, y（通过引用返回解）
-// 返回：gcd(a, b)
-int exgcd(int a, int b, int &x, int &y) {
-    // 基本情况：b == 0 时，gcd(a, 0) = a
-    // 此时：a×1 + 0×0 = a，所以 x = 1, y = 0
-    if (b == 0) {
-        x = 1;
-        y = 0;
-        return a;
+// 解析模幂参数
+bool parseModPowParams(const string& json, long long& n, long long& m, long long& b) {
+    size_t nPos = json.find("\"n\":");
+    size_t mPos = json.find("\"m\":");
+    size_t bPos = json.find("\"b\":");
+    
+    if (nPos == string::npos || mPos == string::npos || bPos == string::npos) {
+        return false;
     }
     
-    // 递归调用：求 b 和 a%b 的解
-    // 为什么是 a%b？因为欧几里得算法：gcd(a, b) = gcd(b, a%b)
-    int x1, y1;
-    int gcd = exgcd(b, a % b, x1, y1);
-    
-    // 回溯时更新 x 和 y
-    // 已知：b×x1 + (a%b)×y1 = gcd
-    // 因为：a%b = a - (a/b)×b
-    // 所以：b×x1 + (a - (a/b)×b)×y1 = gcd
-    //      b×x1 + a×y1 - (a/b)×b×y1 = gcd
-    //      a×y1 + b×(x1 - (a/b)×y1) = gcd
-    // 对比：a×x + b×y = gcd
-    // 得到：x = y1, y = x1 - (a/b)×y1
-    x = y1;
-    y = x1 - (a / b) * y1;
-    
-    return gcd;
+    try {
+        n = stoll(json.substr(nPos + 4));
+        m = stoll(json.substr(mPos + 4));
+        b = stoll(json.substr(bPos + 4));
+        return true;
+    } catch (...) {
+        return false;
+    }
 }
 
-// 求解二元一次不定方程：ax + by = c
-// 
-// 核心定理：方程 ax + by = c 有整数解
-//           ⇔ gcd(a, b) 能整除 c
-//
-// 步骤：
-// 1. 用扩展欧几里得求出 ax + by = gcd(a, b) 的特解
-// 2. 将特解乘以 c/gcd，得到原方程的特解
-// 3. 通解 = 特解 + 通解项
-//
-// 通解公式：
-//   x = x₀ + (b/gcd) × t
-//   y = y₀ - (a/gcd) × t
-//   其中 t 为任意整数
-//
-// 举例：3x + 5y = 7
-// 1. gcd(3, 5) = 1，能整除 7
-// 2. 3x + 5y = 1 的特解：x = 2, y = -1
-// 3. 原方程特解：x₀ = 2×7 = 14, y₀ = -1×7 = -7
-// 4. 通解：x = 14 + 5t, y = -7 - 3t
-struct EquationResult {
-    bool hasSolution;   // 是否有解
-    int x0, y0;         // 特解
-    int gcd;            // gcd(a, b)
-    int a, b, c;        // 原方程系数
-    string message;     // 错误信息
-};
-
-EquationResult solveIndefiniteEquation(int a, int b, int c) {
-    EquationResult result;
-    result.a = a;
-    result.b = b;
-    result.c = c;
+// 解析不定方程参数
+bool parseEquationParams(const string& json, int& a, int& b, int& c) {
+    size_t aPos = json.find("\"a\":");
+    size_t bPos = json.find("\"b\":");
+    size_t cPos = json.find("\"c\":");
     
-    // ========== 特殊情况处理 ==========
-    
-    // 情况1：a = 0 且 b = 0
-    // 方程变成：0x + 0y = c
-    // 如果 c = 0，则任何整数都是解
-    // 如果 c ≠ 0，则无解
-    if (a == 0 && b == 0) {
-        if (c == 0) {
-            result.hasSolution = true;
-            result.message = "方程有无数解（任何整数都行）";
-        } else {
-            result.hasSolution = false;
-            result.message = "方程无解";
-        }
-        return result;
+    if (aPos == string::npos || bPos == string::npos || cPos == string::npos) {
+        return false;
     }
     
-    // 情况2：a = 0，方程变成：0x + by = c
-    // 即：by = c，需要 b 能整除 c
-    if (a == 0) {
-        if (c % b == 0) {
-            result.hasSolution = true;
-            result.x0 = 0;
-            result.y0 = c / b;
-            result.gcd = abs(b);
-        } else {
-            result.hasSolution = false;
-            result.message = "方程无解（b 不能整除 c）";
-        }
-        return result;
+    try {
+        a = stoi(json.substr(aPos + 4));
+        b = stoi(json.substr(bPos + 4));
+        c = stoi(json.substr(cPos + 4));
+        return true;
+    } catch (...) {
+        return false;
     }
-    
-    // 情况3：b = 0，方程变成：ax + 0y = c
-    // 即：ax = c，需要 a 能整除 c
-    if (b == 0) {
-        if (c % a == 0) {
-            result.hasSolution = true;
-            result.x0 = c / a;
-            result.y0 = 0;
-            result.gcd = abs(a);
-        } else {
-            result.hasSolution = false;
-            result.message = "方程无解（a 不能整除 c）";
-        }
-        return result;
-    }
-    
-    // ========== 一般情况：a ≠ 0 且 b ≠ 0 ==========
-    
-    // 使用扩展欧几里得求 ax + by = gcd(a, b) 的特解
-    // 注意：exgcd 需要正数，所以取绝对值
-    int absA = abs(a);
-    int absB = abs(b);
-    int x, y;
-    int gcd = exgcd(absA, absB, x, y);
-    
-    // 判断是否有解：c 必须能被 gcd 整除
-    // 这是数论中的核心定理！
-    if (c % gcd != 0) {
-        result.hasSolution = false;
-        result.message = "方程无解（" + to_string(c) + " 不能被 " + to_string(gcd) + " 整除）";
-        return result;
-    }
-    
-    // 如果原系数是负数，调整符号
-    // 因为 exgcd 是用正数算的，现在要对应回原方程
-    if (a < 0) x = -x;
-    if (b < 0) y = -y;
-    
-    // 计算原方程的特解
-    // 基本原理：如果 ax₀ + by₀ = gcd(a, b)
-    // 那么：a×x₀×(c/gcd) + b×y₀×(c/gcd) = c
-    // 所以：x₀ = x × (c/gcd)，y₀ = y × (c/gcd)
-    result.hasSolution = true;
-    result.x0 = x * (c / gcd);
-    result.y0 = y * (c / gcd);
-    result.gcd = gcd;
-    
-    return result;
 }
 
 // ================================================================
-// ==================== 主函数 ====================
+// ==================== 主函数 ================================
 // ================================================================
 
 int main() {
     httplib::Server svr;
 
-    // CORS支持（允许网页跨域访问）
+    // CORS支持
     svr.set_post_routing_handler([](const auto& req, auto& res) {
         res.set_header("Access-Control-Allow-Origin", "*");
         res.set_header("Access-Control-Allow-Methods", "POST, OPTIONS");
         res.set_header("Access-Control-Allow-Headers", "Content-Type");
     });
 
-    // GCD API
+    // ========== GCD API ==========
     svr.Post("/gcd", [](const httplib::Request& req, httplib::Response& res) {
         try {
             vector<int> numbers = parseNumbers(req.body);
@@ -458,7 +481,7 @@ int main() {
         }
     });
 
-    // LCM API
+    // ========== LCM API ==========
     svr.Post("/lcm", [](const httplib::Request& req, httplib::Response& res) {
         try {
             vector<int> numbers = parseNumbers(req.body);
@@ -473,7 +496,7 @@ int main() {
         }
     });
 
-    // Prime API
+    // ========== Prime API ==========
     svr.Post("/prime", [](const httplib::Request& req, httplib::Response& res) {
         try {
             vector<int> numbers = parseNumbers(req.body);
@@ -493,23 +516,46 @@ int main() {
         }
     });
 
-    // Equation API - 求解不定方程
-    svr.Post("/equation", [](const httplib::Request& req, httplib::Response& res) {
+    // ========== ModPow API ==========
+    svr.Post("/modpow", [](const httplib::Request& req, httplib::Response& res) {
         try {
-            // 解析 JSON 中的 a, b, c
-            size_t aPos = req.body.find("\"a\":");
-            size_t bPos = req.body.find("\"b\":");
-            size_t cPos = req.body.find("\"c\":");
-            
-            if (aPos == string::npos || bPos == string::npos || cPos == string::npos) {
-                res.set_content(createJsonResponse(false, 0, "缺少参数 a, b, c"), "application/json");
+            long long n, m, b;
+            if (!parseModPowParams(req.body, n, m, b)) {
+                res.set_content(createJsonResponse(false, 0, "缺少参数 n, m, b"), "application/json");
                 return;
             }
             
-            // 提取数值（简化处理，实际应该用完整的 JSON 解析）
-            int a = stoi(req.body.substr(aPos + 4));
-            int b = stoi(req.body.substr(bPos + 4));
-            int c = stoi(req.body.substr(cPos + 4));
+            if (b <= 0) {
+                res.set_content(createJsonResponse(false, 0, "模数 b 必须为正整数"), "application/json");
+                return;
+            }
+            
+            if (m < 0) {
+                res.set_content(createJsonResponse(false, 0, "指数 m 必须为非负整数"), "application/json");
+                return;
+            }
+            
+            long long result = modPow(n, m, b);
+            
+            stringstream ss;
+            ss << "{";
+            ss << "\"success\":true,";
+            ss << "\"result\":" << result;
+            ss << "}";
+            res.set_content(ss.str(), "application/json");
+        } catch (const exception& e) {
+            res.set_content(createJsonResponse(false, 0, e.what()), "application/json");
+        }
+    });
+
+    // ========== Equation API ==========
+    svr.Post("/equation", [](const httplib::Request& req, httplib::Response& res) {
+        try {
+            int a, b, c;
+            if (!parseEquationParams(req.body, a, b, c)) {
+                res.set_content(createJsonResponse(false, 0, "缺少参数 a, b, c"), "application/json");
+                return;
+            }
             
             EquationResult result = solveIndefiniteEquation(a, b, c);
             
@@ -543,7 +589,7 @@ int main() {
         }
     });
 
-    // Calculator API
+    // ========== Calculator API ==========
     svr.Post("/calc", [](const httplib::Request& req, httplib::Response& res) {
         try {
             string expr = parseExpression(req.body);
@@ -558,13 +604,15 @@ int main() {
         }
     });
 
+    // ========== 服务器信息 ==========
     cout << "========================================" << endl;
-    cout << "🚀 C++ Math Server 已启动" << endl;
+    cout << "🚀 C++ Math Server v2.0" << endl;
     cout << "========================================" << endl;
-    cout << "📐 GCD API: POST /gcd" << endl;
-    cout << "📏 LCM API: POST /lcm" << endl;
-    cout << "🔢 Prime API: POST /prime" << endl;
-    cout << "📝 Equation API: POST /equation" << endl;
+    cout << "📐 GCD API:        POST /gcd" << endl;
+    cout << "📏 LCM API:        POST /lcm" << endl;
+    cout << "🔢 Prime API:      POST /prime" << endl;
+    cout << "⚡ ModPow API:     POST /modpow" << endl;
+    cout << "📝 Equation API:   POST /equation" << endl;
     cout << "🧮 Calculator API: POST /calc" << endl;
     cout << "========================================" << endl;
     cout << "📍 监听地址: http://localhost:8080" << endl;
