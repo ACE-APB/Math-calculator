@@ -130,10 +130,9 @@ function filterPrimes(nums) {
 }
 
 // ==================== 模幂运算 ====================
-// 快速幂：计算 (base^exp) % mod
 function fastPow(base, exp, mod) {
     if (mod === 1) return 0;
-    base = ((base % mod) + mod) % mod;  // 处理负数
+    base = ((base % mod) + mod) % mod;
     let result = 1;
     while (exp > 0) {
         if (exp & 1) {
@@ -145,11 +144,9 @@ function fastPow(base, exp, mod) {
     return result;
 }
 
-// 求循环节：找到最小的 i，使得 n^i ≡ 1 (mod b)
 function findCycle(n, b) {
     if (b === 1) return 0;
-    if (gcd(n, b) !== 1) return -1;  // 不互质，没有循环节
-    
+    if (gcd(n, b) !== 1) return -1;
     n = ((n % b) + b) % b;
     let current = 1;
     for (let i = 1; i <= b; i++) {
@@ -161,27 +158,12 @@ function findCycle(n, b) {
     return -1;
 }
 
-// 模幂运算主函数
 function modPow(n, m, b) {
     if (b === 1) return 0;
     if (m === 0) return 1 % b;
-    
-    // 方法1：直接用快速幂（最通用）
-    let result = fastPow(n, m, b);
-    
-    // 方法2：找循环节（仅当互质时）
-    let cycle = findCycle(n, b);
-    if (cycle !== -1 && m > cycle) {
-        let exp = m % cycle;
-        if (exp === 0) exp = cycle;
-        let result2 = fastPow(n, exp, b);
-        // 两种方法结果应该一致
-    }
-    
-    return result;
+    return fastPow(n, m, b);
 }
 
-// 生成模幂计算的详细过程
 function generateModPowDetails(n, m, b) {
     let lines = [];
     lines.push('📐 ' + n + '^' + m + ' ≡ x (mod ' + b + ')');
@@ -197,13 +179,11 @@ function generateModPowDetails(n, m, b) {
     lines.push('  ' + n + ' mod ' + b + ' = ' + base);
     lines.push('');
     
-    // 直接用快速幂
     let result = fastPow(n, m, b);
     lines.push('第2步：快速幂计算');
     lines.push('  ' + n + '^' + m + ' ≡ ' + result + ' (mod ' + b + ')');
     lines.push('');
     
-    // 找循环节
     let cycle = findCycle(n, b);
     if (cycle !== -1 && m > cycle) {
         lines.push('💡 循环节：');
@@ -221,7 +201,6 @@ function generateModPowDetails(n, m, b) {
     
     lines.push('');
     lines.push('✅ 结果：x = ' + result);
-    
     return lines;
 }
 
@@ -335,7 +314,6 @@ async function calculatePrime() {
     }
 }
 
-// ==================== 模幂计算 ====================
 async function calculateModPow() {
     const nInput = document.getElementById('modpowN').value.trim();
     const mInput = document.getElementById('modpowM').value.trim();
@@ -370,7 +348,6 @@ async function calculateModPow() {
     try {
         const result = await callBackend('modpow', { n: n, m: m, b: b });
         if (result.success) {
-            // 显示详细过程
             const details = generateModPowDetails(n, m, b);
             showResult(details.join('\n'));
             updateStatus('计算完成！');
@@ -379,14 +356,12 @@ async function calculateModPow() {
             updateStatus('计算失败', true);
         }
     } catch (error) {
-        // 使用 JavaScript 引擎
         const details = generateModPowDetails(n, m, b);
         showResult(details.join('\n'));
         updateStatus('使用 JavaScript 引擎计算完成');
     }
 }
 
-// ==================== 不定方程 ====================
 async function calculateEquation() {
     const input = document.getElementById('equationInput').value.trim();
     if (!input) { showResult('请输入方程！', true); return; }
@@ -437,7 +412,6 @@ async function calculateEquation() {
     }
 }
 
-// ==================== 计算器 ====================
 async function calculateExpression() {
     const expression = document.getElementById('calcInput').value.trim();
     if (!expression) { showResult('请输入表达式！', true); return; }
@@ -464,7 +438,6 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('primeInput').addEventListener('keypress', e => { if (e.key === 'Enter') calculatePrime(); });
     document.getElementById('equationInput').addEventListener('keypress', e => { if (e.key === 'Enter') calculateEquation(); });
     document.getElementById('calcInput').addEventListener('keydown', e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) calculateExpression(); });
-    // 模幂回车
     document.getElementById('modpowN').addEventListener('keypress', e => { if (e.key === 'Enter') calculateModPow(); });
     document.getElementById('modpowM').addEventListener('keypress', e => { if (e.key === 'Enter') calculateModPow(); });
     document.getElementById('modpowB').addEventListener('keypress', e => { if (e.key === 'Enter') calculateModPow(); });
