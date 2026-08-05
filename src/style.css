@@ -19,7 +19,7 @@ body {
     border-radius: 20px;
     padding: 40px;
     box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-    max-width: 750px;
+    max-width: 800px;
     width: 100%;
 }
 
@@ -30,23 +30,28 @@ h1 {
     font-size: 28px;
 }
 
+/* ==================== 菜单 ==================== */
 .menu {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr;
-    gap: 5px;
+    gap: 6px;
     margin-bottom: 20px;
 }
 
 .menu-btn {
-    padding: 8px 4px;
+    padding: 10px 6px;
     border: none;
-    border-radius: 8px;
-    font-size: 12px;
+    border-radius: 10px;
+    font-size: 13px;
     font-weight: bold;
     cursor: pointer;
     transition: all 0.3s;
     background: #f0f0f0;
     color: #333;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
 }
 
 .menu-btn:hover {
@@ -59,6 +64,49 @@ h1 {
     color: white;
 }
 
+/* ==================== 专业数学图标 ==================== */
+
+.icon-math {
+    display: inline-block;
+    width: 28px;
+    height: 28px;
+    line-height: 28px;
+    text-align: center;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border-radius: 6px;
+    color: white;
+    font-weight: bold;
+    font-size: 16px;
+    font-family: 'Times New Roman', serif;
+    font-style: italic;
+    vertical-align: middle;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+}
+
+/* 不同功能的图标颜色变体 */
+.icon-math.gcd { background: linear-gradient(135deg, #667eea, #764ba2); }
+.icon-math.lcm { background: linear-gradient(135deg, #f093fb, #f5576c); }
+.icon-math.prime { background: linear-gradient(135deg, #4facfe, #00f2fe); }
+.icon-math.modpow { background: linear-gradient(135deg, #43e97b, #38f9d7); color: #1a5a2a; }
+.icon-math.equation { background: linear-gradient(135deg, #fa709a, #fee140); color: #7a3a0a; }
+.icon-math.calc { background: linear-gradient(135deg, #a18cd1, #fbc2eb); color: #4a2a6a; }
+
+/* 悬停效果 */
+.icon-math:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 16px rgba(102, 126, 234, 0.5);
+}
+
+/* 激活状态 */
+.menu-btn.active .icon-math {
+    transform: scale(1.05);
+    box-shadow: 0 0 20px rgba(102, 126, 234, 0.6);
+}
+
+/* ==================== 内容区域 ==================== */
 .content {
     min-height: 260px;
 }
@@ -171,31 +219,17 @@ textarea {
     font-size: 14px;
 }
 
-/* 模幂输入框行 */
-.modpow-row {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-    margin-top: 8px;
-}
-
-.modpow-row input {
-    flex: 1;
-    min-width: 0;
-}
-
-.modpow-row .operator {
-    font-size: 20px;
-    font-weight: bold;
-    color: #555;
-    padding: 0 4px;
-    white-space: nowrap;
-}
-
-@media (max-width: 600px) {
+/* ==================== 响应式 ==================== */
+@media (max-width: 650px) {
     .container { padding: 20px; }
-    .menu { grid-template-columns: 1fr 1fr 1fr; }
-    .menu-btn { padding: 8px; font-size: 11px; }
-    .modpow-row { flex-wrap: wrap; }
-    .modpow-row input { flex: 1 1 60px; }
+    .menu { grid-template-columns: 1fr 1fr 1fr; gap: 4px; }
+    .menu-btn { font-size: 12px; padding: 8px 4px; }
+    .icon-math { width: 22px; height: 22px; line-height: 22px; font-size: 13px; }
+}
+
+@media (max-width: 400px) {
+    .container { padding: 15px; }
+    .menu { grid-template-columns: 1fr 1fr; }
+    .menu-btn { font-size: 11px; padding: 6px 3px; }
+    .icon-math { width: 20px; height: 20px; line-height: 20px; font-size: 11px; }
 }
