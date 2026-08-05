@@ -14,7 +14,14 @@ function switchMode(mode) {
 }
 
 function getModeName(mode) {
-    const names = { 'gcd': 'GCD', 'lcm': 'LCM', 'prime': '质数', 'equation': '不定方程', 'calc': '计算器' };
+    const names = {
+        'gcd': 'GCD',
+        'lcm': 'LCM',
+        'prime': '质数',
+        'modpow': '模幂',
+        'equation': '不定方程',
+        'calc': '计算器'
+    };
     return names[mode] || mode;
 }
 
@@ -60,6 +67,8 @@ function simulateCalculation(endpoint, data) {
         } else {
             return { success: true, result: filterPrimes(nums) };
         }
+    } else if (endpoint === 'modpow') {
+        return { success: true, result: modPow(data.n, data.m, data.b) };
     } else if (endpoint === 'equation') {
         const result = solveEquation(data.a, data.b, data.c);
         return { success: true, ...result };
@@ -120,6 +129,102 @@ function filterPrimes(nums) {
     return nums.filter(n => isPrime(n));
 }
 
+// ==================== 模幂运算 ====================
+// 快速幂：计算 (base^exp) % mod
+function fastPow(base, exp, mod) {
+    if (mod === 1) return 0;
+    base = ((base % mod) + mod) % mod;  // 处理负数
+    let result = 1;
+    while (exp > 0) {
+        if (exp & 1) {
+            result = (result * base) % mod;
+        }
+        base = (base * base) % mod;
+        exp >>= 1;
+    }
+    return result;
+}
+
+// 求循环节：找到最小的 i，使得 n^i ≡ 1 (mod b)
+function findCycle(n, b) {
+    if (b === 1) return 0;
+    if (gcd(n, b) !== 1) return -1;  // 不互质，没有循环节
+    
+    n = ((n % b) + b) % b;
+    let current = 1;
+    for (let i = 1; i <= b; i++) {
+        current = (current * n) % b;
+        if (current === 1) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+// 模幂运算主函数
+function modPow(n, m, b) {
+    if (b === 1) return 0;
+    if (m === 0) return 1 % b;
+    
+    // 方法1：直接用快速幂（最通用）
+    let result = fastPow(n, m, b);
+    
+    // 方法2：找循环节（仅当互质时）
+    let cycle = findCycle(n, b);
+    if (cycle !== -1 && m > cycle) {
+        let exp = m % cycle;
+        if (exp === 0) exp = cycle;
+        let result2 = fastPow(n, exp, b);
+        // 两种方法结果应该一致
+    }
+    
+    return result;
+}
+
+// 生成模幂计算的详细过程
+function generateModPowDetails(n, m, b) {
+    let lines = [];
+    lines.push('📐 ' + n + '^' + m + ' ≡ x (mod ' + b + ')');
+    lines.push('');
+    
+    if (b === 1) {
+        lines.push('💡 任何数 mod 1 = 0');
+        return lines;
+    }
+    
+    let base = ((n % b) + b) % b;
+    lines.push('第1步：底数取模');
+    lines.push('  ' + n + ' mod ' + b + ' = ' + base);
+    lines.push('');
+    
+    // 直接用快速幂
+    let result = fastPow(n, m, b);
+    lines.push('第2步：快速幂计算');
+    lines.push('  ' + n + '^' + m + ' ≡ ' + result + ' (mod ' + b + ')');
+    lines.push('');
+    
+    // 找循环节
+    let cycle = findCycle(n, b);
+    if (cycle !== -1 && m > cycle) {
+        lines.push('💡 循环节：');
+        lines.push('  ' + n + '^' + cycle + ' ≡ 1 (mod ' + b + ')');
+        let exp = m % cycle;
+        if (exp === 0) exp = cycle;
+        lines.push('  ' + n + '^' + m + ' = ' + n + '^(' + cycle + '×' + Math.floor(m/cycle) + ' + ' + exp + ')');
+        lines.push('  ≡ ' + n + '^' + exp + ' (mod ' + b + ')');
+        let result2 = fastPow(n, exp, b);
+        lines.push('  = ' + result2);
+    } else if (cycle === -1) {
+        lines.push('💡 注意：gcd(' + n + ', ' + b + ') ≠ 1');
+        lines.push('  没有循环节，直接使用快速幂');
+    }
+    
+    lines.push('');
+    lines.push('✅ 结果：x = ' + result);
+    
+    return lines;
+}
+
 // ==================== 不定方程 ====================
 function exgcd(a, b) {
     if (b === 0) {
@@ -156,6 +261,27 @@ function solveEquation(a, b, c) {
     if (a < 0) x = -x;
     if (b < 0) y = -y;
     return { hasSolution: true, x0: x * (c / gcd), y0: y * (c / gcd), gcd: gcd, a: a, b: b, c: c };
+}
+
+function formatEquationResult(result) {
+    if (!result.hasSolution) return '❌ ' + result.message;
+    if (result.message) return result.message;
+    let a = result.a, b = result.b, c = result.c;
+    let x0 = result.x0, y0 = result.y0, gcd = result.gcd;
+    let output = '📐 方程：' + a + 'x + ' + b + 'y = ' + c + '\n';
+    output += '🔢 gcd(' + a + ', ' + b + ') = ' + gcd + '\n\n';
+    output += '📌 特解：\n  x₀ = ' + x0 + '\n  y₀ = ' + y0 + '\n\n';
+    output += '✅ 验证：\n  ' + a + '×' + x0 + ' + ' + b + '×' + y0 + ' = ' + (a*x0 + b*y0) + '\n\n';
+    let t1 = b / gcd, t2 = a / gcd;
+    if (t1 < 0) { t1 = -t1; t2 = -t2; }
+    output += '📝 通解：\n  x = ' + x0 + ' + ' + t1 + 't\n  y = ' + y0 + ' - ' + t2 + 't\n  其中 t 为任意整数\n\n';
+    output += '📊 几组具体解：\n';
+    for (let t = -3; t <= 3; t++) {
+        let x = x0 + t1 * t, y = y0 - t2 * t;
+        output += '  t=' + t + ': x=' + x + ', y=' + y;
+        output += '  ✅ ' + a + '×' + x + ' + ' + b + '×' + y + ' = ' + (a*x + b*y) + '\n';
+    }
+    return output;
 }
 
 // ==================== 计算函数 ====================
@@ -209,33 +335,63 @@ async function calculatePrime() {
     }
 }
 
-function formatEquationResult(result) {
-    if (!result.hasSolution) return '❌ ' + result.message;
-    if (result.message) return result.message;
-    let a = result.a, b = result.b, c = result.c;
-    let x0 = result.x0, y0 = result.y0, gcd = result.gcd;
-    let output = '📐 方程：' + a + 'x + ' + b + 'y = ' + c + '\n';
-    output += '🔢 gcd(' + a + ', ' + b + ') = ' + gcd + '\n\n';
-    output += '📌 特解：\n  x₀ = ' + x0 + '\n  y₀ = ' + y0 + '\n\n';
-    output += '✅ 验证：\n  ' + a + '×' + x0 + ' + ' + b + '×' + y0 + ' = ' + (a*x0 + b*y0) + '\n\n';
-    let t1 = b / gcd, t2 = a / gcd;
-    if (t1 < 0) { t1 = -t1; t2 = -t2; }
-    output += '📝 通解：\n  x = ' + x0 + ' + ' + t1 + 't\n  y = ' + y0 + ' - ' + t2 + 't\n  其中 t 为任意整数\n\n';
-    output += '📊 几组具体解：\n';
-    for (let t = -3; t <= 3; t++) {
-        let x = x0 + t1 * t, y = y0 - t2 * t;
-        output += '  t=' + t + ': x=' + x + ', y=' + y;
-        output += '  ✅ ' + a + '×' + x + ' + ' + b + '×' + y + ' = ' + (a*x + b*y) + '\n';
+// ==================== 模幂计算 ====================
+async function calculateModPow() {
+    const nInput = document.getElementById('modpowN').value.trim();
+    const mInput = document.getElementById('modpowM').value.trim();
+    const bInput = document.getElementById('modpowB').value.trim();
+    
+    if (!nInput || !mInput || !bInput) {
+        showResult('请完整填写 n、m、b！', true);
+        return;
     }
-    return output;
+    
+    const n = parseInt(nInput);
+    const m = parseInt(mInput);
+    const b = parseInt(bInput);
+    
+    if (isNaN(n) || isNaN(m) || isNaN(b)) {
+        showResult('请输入有效的整数！', true);
+        return;
+    }
+    
+    if (b <= 0) {
+        showResult('模数 b 必须为正整数！', true);
+        return;
+    }
+    
+    if (m < 0) {
+        showResult('指数 m 必须为非负整数！', true);
+        return;
+    }
+    
+    updateStatus('正在计算模幂...');
+    
+    try {
+        const result = await callBackend('modpow', { n: n, m: m, b: b });
+        if (result.success) {
+            // 显示详细过程
+            const details = generateModPowDetails(n, m, b);
+            showResult(details.join('\n'));
+            updateStatus('计算完成！');
+        } else {
+            showResult('错误：' + result.error, true);
+            updateStatus('计算失败', true);
+        }
+    } catch (error) {
+        // 使用 JavaScript 引擎
+        const details = generateModPowDetails(n, m, b);
+        showResult(details.join('\n'));
+        updateStatus('使用 JavaScript 引擎计算完成');
+    }
 }
 
+// ==================== 不定方程 ====================
 async function calculateEquation() {
     const input = document.getElementById('equationInput').value.trim();
     if (!input) { showResult('请输入方程！', true); return; }
     updateStatus('正在求解不定方程...');
     try {
-        // 解析方程
         let s = input.replace(/\s/g, '');
         let eqPos = s.indexOf('=');
         if (eqPos === -1) throw new Error('未找到 "=" 符号');
@@ -281,6 +437,7 @@ async function calculateEquation() {
     }
 }
 
+// ==================== 计算器 ====================
 async function calculateExpression() {
     const expression = document.getElementById('calcInput').value.trim();
     if (!expression) { showResult('请输入表达式！', true); return; }
@@ -307,5 +464,9 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('primeInput').addEventListener('keypress', e => { if (e.key === 'Enter') calculatePrime(); });
     document.getElementById('equationInput').addEventListener('keypress', e => { if (e.key === 'Enter') calculateEquation(); });
     document.getElementById('calcInput').addEventListener('keydown', e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) calculateExpression(); });
+    // 模幂回车
+    document.getElementById('modpowN').addEventListener('keypress', e => { if (e.key === 'Enter') calculateModPow(); });
+    document.getElementById('modpowM').addEventListener('keypress', e => { if (e.key === 'Enter') calculateModPow(); });
+    document.getElementById('modpowB').addEventListener('keypress', e => { if (e.key === 'Enter') calculateModPow(); });
     updateStatus('就绪');
 });
