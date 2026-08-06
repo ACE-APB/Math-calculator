@@ -154,6 +154,194 @@ long long modPow(long long n, long long m, long long b) {
 }
 
 // ================================================================
+// ==================== CRT 中国剩余定理 ==========================
+// ================================================================
+
+// 扩展欧几里得（CRT专用）
+int exgcdCRT(int a, int b, int &x, int &y) {
+    if (b == 0) {
+        x = 1;
+        y = 0;
+        return a;
+    }
+    int x1, y1;
+    int gcd = exgcdCRT(b, a % b, x1, y1);
+    x = y1;
+    y = x1 - (a / b) * y1;
+    return gcd;
+}
+
+// 中国剩余定理
+struct CRTResult {
+    bool success;
+    long long x;
+    long long M;
+    string error;
+};
+
+CRTResult crt(const vector<int>& aList, const vector<int>& mList) {
+    CRTResult result;
+    result.success = false;
+    
+    if (aList.size() != mList.size()) {
+        result.error = "余数数组和模数数组长度必须相同";
+        return result;
+    }
+    if (aList.empty()) {
+        result.error = "请输入至少一个同余式";
+        return result;
+    }
+    
+    long long M = 1;
+    for (int m : mList) M *= m;
+    
+    long long x = 0;
+    for (size_t i = 0; i < aList.size(); i++) {
+        long long Mi = M / mList[i];
+        int inv, y;
+        int gcd = exgcdCRT(Mi, mList[i], inv, y);
+        if (gcd != 1) {
+            result.error = "模数 " + to_string(mList[i]) + " 不互质";
+            return result;
+        }
+        inv = (inv % mList[i] + mList[i]) % mList[i];
+        x = (x + (long long)aList[i] * Mi * inv) % M;
+    }
+    
+    result.success = true;
+    result.x = x;
+    result.M = M;
+    return result;
+}
+
+// ================================================================
+// ==================== 费马小定理 / 欧拉定理 ======================
+// ================================================================
+
+struct FermatResult {
+    long long result;
+    string details;
+    bool success;
+    string error;
+};
+
+FermatResult fermatAccel(long long a, long long exp, long long mod) {
+    FermatResult res;
+    res.success = false;
+    
+    if (mod <= 0) {
+        res.error = "模数必须为正整数";
+        return res;
+    }
+    if (mod == 1) {
+        res.result = 0;
+        res.details = "任何数 mod 1 = 0";
+        res.success = true;
+        return res;
+    }
+    if (a == 0) {
+        res.result = 0;
+        res.details = "0 的任何次方 mod " + to_string(mod) + " = 0";
+        res.success = true;
+        return res;
+    }
+    
+    long long base = ((a % mod) + mod) % mod;
+    int g = gcd(static_cast<int>(base), static_cast<int>(mod));
+    
+    stringstream details;
+    details << "📐 计算 " << a << "^" << exp << " mod " << mod << "\n\n";
+    details << "gcd(" << base << ", " << mod << ") = " << g << "\n";
+    
+    if (g == 1) {
+        details << "✅ 互质，使用欧拉定理\n";
+        int phi = eulerPhi(static_cast<int>(mod));
+        details << "φ(" << mod << ") = " << phi << "\n";
+        
+        if (is_prime(static_cast<int>(mod))) {
+            details << "💡 " << mod << " 是质数，可用费马小定理\n";
+            details << "  " << base << "^(" << mod << "-1) ≡ 1 (mod " << mod << ")\n";
+        }
+        
+        long long newExp = exp % phi;
+        details << "\n指数化简：" << exp << " mod " << phi << " = " << newExp << "\n";
+        details << "计算 " << base << "^" << newExp << " mod " << mod << "\n";
+        
+        long long result = fastPow(base, newExp, mod);
+        details << "✅ 结果：" << result;
+        
+        res.result = result;
+        res.details = details.str();
+        res.success = true;
+        return res;
+    } else {
+        details << "⚠️ 不互质，不能使用欧拉定理\n";
+        details << "直接使用快速幂计算\n";
+        long long result = fastPow(base, exp, mod);
+        details << "✅ 结果：" << result;
+        
+        res.result = result;
+        res.details = details.str();
+        res.success = true;
+        return res;
+    }
+}
+
+// 解析 CRT 参数
+bool parseCRTParams(const string& json, vector<int>& aList, vector<int>& mList) {
+    size_t aPos = json.find("\"a\":[");
+    size_t mPos = json.find("\"m\":[");
+    
+    if (aPos == string::npos || mPos == string::npos) return false;
+    
+    try {
+        // 解析 a 数组
+        size_t aEnd = json.find("]", aPos);
+        string aStr = json.substr(aPos + 5, aEnd - aPos - 5);
+        stringstream ass(aStr);
+        string token;
+        while (getline(ass, token, ',')) {
+            token.erase(0, token.find_first_not_of(" \t\n\r"));
+            token.erase(token.find_last_not_of(" \t\n\r") + 1);
+            if (!token.empty()) aList.push_back(stoi(token));
+        }
+        
+        // 解析 m 数组
+        size_t mEnd = json.find("]", mPos);
+        string mStr = json.substr(mPos + 5, mEnd - mPos - 5);
+        stringstream mss(mStr);
+        while (getline(mss, token, ',')) {
+            token.erase(0, token.find_first_not_of(" \t\n\r"));
+            token.erase(token.find_last_not_of(" \t\n\r") + 1);
+            if (!token.empty()) mList.push_back(stoi(token));
+        }
+        
+        return true;
+    } catch (...) {
+        return false;
+    }
+}
+
+bool parseFermatParams(const string& json, long long& a, long long& exp, long long& mod) {
+    size_t aPos = json.find("\"a\":");
+    size_t expPos = json.find("\"exp\":");
+    size_t modPos = json.find("\"mod\":");
+    
+    if (aPos == string::npos || expPos == string::npos || modPos == string::npos) {
+        return false;
+    }
+    
+    try {
+        a = stoll(json.substr(aPos + 4));
+        exp = stoll(json.substr(expPos + 5));
+        mod = stoll(json.substr(modPos + 5));
+        return true;
+    } catch (...) {
+        return false;
+    }
+}
+
+// ================================================================
 // ==================== 表达式求值 ================================
 // ================================================================
 
@@ -655,6 +843,60 @@ int main() {
         }
     });
 
+    // CRT API
+    svr.Post("/crt", [](const httplib::Request& req, httplib::Response& res) {
+        try {
+            vector<int> aList, mList;
+            if (!parseCRTParams(req.body, aList, mList)) {
+                res.set_content(createJsonResponse(false, 0, "缺少参数 a 或 m"), "application/json");
+                return;
+            }
+            
+            CRTResult result = crt(aList, mList);
+            
+            if (result.success) {
+                stringstream ss;
+                ss << "{";
+                ss << "\"success\":true,";
+                ss << "\"x\":" << result.x << ",";
+                ss << "\"M\":" << result.M;
+                ss << "}";
+                res.set_content(ss.str(), "application/json");
+            } else {
+                res.set_content(createJsonResponse(false, 0, result.error), "application/json");
+            }
+        } catch (const exception& e) {
+            res.set_content(createJsonResponse(false, 0, e.what()), "application/json");
+        }
+    });
+    
+    // Fermat API
+    svr.Post("/fermat", [](const httplib::Request& req, httplib::Response& res) {
+        try {
+            long long a, exp, mod;
+            if (!parseFermatParams(req.body, a, exp, mod)) {
+                res.set_content(createJsonResponse(false, 0, "缺少参数 a, exp, mod"), "application/json");
+                return;
+            }
+            
+            FermatResult result = fermatAccel(a, exp, mod);
+            
+            if (result.success) {
+                stringstream ss;
+                ss << "{";
+                ss << "\"success\":true,";
+                ss << "\"result\":" << result.result << ",";
+                ss << "\"details\":\"" << result.details << "\"";
+                ss << "}";
+                res.set_content(ss.str(), "application/json");
+            } else {
+                res.set_content(createJsonResponse(false, 0, result.error), "application/json");
+            }
+        } catch (const exception& e) {
+            res.set_content(createJsonResponse(false, 0, e.what()), "application/json");
+        }
+    });
+
     cout << "========================================" << endl;
     cout << "🚀 C++ Math Server v2.0" << endl;
     cout << "========================================" << endl;
@@ -665,6 +907,8 @@ int main() {
     cout << "⚡ ModPow API:     POST /modpow" << endl;
     cout << "📝 Equation API:   POST /equation" << endl;
     cout << "🧮 Calculator API: POST /calc" << endl;
+    cout << "⊞ CRT API:         POST /crt" << endl;
+    cout << "ℱ Fermat API:      POST /fermat" << endl;
     cout << "========================================" << endl;
     cout << "📍 监听地址: http://localhost:8080" << endl;
     cout << "🔄 Press Ctrl+C to stop" << endl;
