@@ -20,6 +20,8 @@ function getModeName(mode) {
         'prime': '质数',
         'phi': '欧拉函数',
         'modpow': '模幂',
+        'crt': '中国剩余定理',
+        'fermat': '费马定理',
         'equation': '不定方程',
         'calc': '计算器'
     };
@@ -72,6 +74,10 @@ function simulateCalculation(endpoint, data) {
         return { success: true, result: eulerPhi(data.n) };
     } else if (endpoint === 'modpow') {
         return { success: true, result: modPow(data.n, data.m, data.b) };
+    } else if (endpoint === 'crt') {
+        return { success: true, result: crt(data.a, data.m) };
+    } else if (endpoint === 'fermat') {
+        return { success: true, result: fermatAccel(data.a, data.exp, data.mod) };
     } else if (endpoint === 'equation') {
         const result = solveEquation(data.a, data.b, data.c);
         return { success: true, ...result };
@@ -133,97 +139,52 @@ function filterPrimes(nums) {
 }
 
 // ==================== 欧拉函数 ====================
-
-// 辗转相除法求最大公约数（欧拉专用）
 function gcdForPhi(a, b) {
-    a = Math.abs(a);
-    b = Math.abs(b);
+    a = Math.abs(a); b = Math.abs(b);
     if (a < b) [a, b] = [b, a];
-    while (b !== 0) {
-        [a, b] = [b, a % b];
-    }
+    while (b !== 0) { [a, b] = [b, a % b]; }
     return a;
 }
 
-// 欧拉函数 - 模拟法
 function eulerPhi(n) {
-    if (n <= 0) return 0;
-    if (n === 1) return 1;
-    
-    let count = 0;
-    for (let i = 1; i <= n; i++) {
-        if (gcdForPhi(i, n) === 1) {
-            count++;
-        }
-    }
-    return count;
-}
-
-// 欧拉函数 - 优化版
-function eulerPhiFast(n) {
     if (n <= 0) return 0;
     if (n === 1) return 1;
     
     let result = n;
     let num = n;
-    
     for (let p = 2; p * p <= num; p++) {
         if (num % p === 0) {
-            while (num % p === 0) {
-                num /= p;
-            }
+            while (num % p === 0) num /= p;
             result -= result / p;
         }
     }
-    
-    if (num > 1) {
-        result -= result / num;
-    }
-    
+    if (num > 1) result -= result / num;
     return result;
 }
 
-// 生成欧拉函数详细过程
 function generatePhiDetails(n) {
     let lines = [];
     lines.push('📐 φ(' + n + ') = 1 到 ' + n + ' 中与 ' + n + ' 互质的数的个数');
     lines.push('');
-    
-    if (n <= 0) {
-        lines.push('❌ n 必须为正整数');
-        return lines;
-    }
-    
+    if (n <= 0) { lines.push('❌ n 必须为正整数'); return lines; }
     let coprimeNumbers = [];
     for (let i = 1; i <= n; i++) {
-        if (gcdForPhi(i, n) === 1) {
-            coprimeNumbers.push(i);
-        }
+        if (gcdForPhi(i, n) === 1) coprimeNumbers.push(i);
     }
-    
     lines.push('与 ' + n + ' 互质的数：');
     lines.push('  ' + coprimeNumbers.join(', '));
     lines.push('');
-    
     lines.push('个数：' + coprimeNumbers.length);
-    lines.push('');
-    
-    let resultFast = eulerPhiFast(n);
-    lines.push('💡 验证（质因数分解法）：');
-    lines.push('  φ(' + n + ') = ' + resultFast);
-    
     return lines;
 }
 
-// ==================== 模幂运算 ====================
+// ==================== 模幂 ====================
 function fastPow(base, exp, mod) {
     if (mod === 1) return 0;
     base = ((base % mod) + mod) % mod;
     let result = 1;
     while (exp > 0) {
-        if (exp & 1) {
-            result = (result * base) % mod;
-        }
+        if (exp & 1) result = (result * base) % mod;
         base = (base * base) % mod;
         exp >>= 1;
     }
@@ -237,9 +198,7 @@ function findCycle(n, b) {
     let current = 1;
     for (let i = 1; i <= b; i++) {
         current = (current * n) % b;
-        if (current === 1) {
-            return i;
-        }
+        if (current === 1) return i;
     }
     return -1;
 }
@@ -254,47 +213,144 @@ function generateModPowDetails(n, m, b) {
     let lines = [];
     lines.push('📐 ' + n + '^' + m + ' ≡ x (mod ' + b + ')');
     lines.push('');
-    
-    if (b === 1) {
-        lines.push('💡 任何数 mod 1 = 0');
-        return lines;
-    }
-    
+    if (b === 1) { lines.push('💡 任何数 mod 1 = 0'); return lines; }
     let base = ((n % b) + b) % b;
     lines.push('第1步：底数取模');
     lines.push('  ' + n + ' mod ' + b + ' = ' + base);
     lines.push('');
-    
     let result = fastPow(n, m, b);
     lines.push('第2步：快速幂计算');
     lines.push('  ' + n + '^' + m + ' ≡ ' + result + ' (mod ' + b + ')');
-    lines.push('');
-    
-    let cycle = findCycle(n, b);
-    if (cycle !== -1 && m > cycle) {
-        lines.push('💡 循环节：');
-        lines.push('  ' + n + '^' + cycle + ' ≡ 1 (mod ' + b + ')');
-        let exp = m % cycle;
-        if (exp === 0) exp = cycle;
-        lines.push('  ' + n + '^' + m + ' = ' + n + '^(' + cycle + '×' + Math.floor(m/cycle) + ' + ' + exp + ')');
-        lines.push('  ≡ ' + n + '^' + exp + ' (mod ' + b + ')');
-        let result2 = fastPow(n, exp, b);
-        lines.push('  = ' + result2);
-    } else if (cycle === -1) {
-        lines.push('💡 注意：gcd(' + n + ', ' + b + ') ≠ 1');
-        lines.push('  没有循环节，直接使用快速幂');
+    return lines;
+}
+
+// ==================== CRT 中国剩余定理 ====================
+
+// 扩展欧几里得（CRT专用）
+function exgcdCRT(a, b) {
+    if (b === 0) return { gcd: Math.abs(a), x: 1, y: 0 };
+    const result = exgcdCRT(b, a % b);
+    return {
+        gcd: result.gcd,
+        x: result.y,
+        y: result.x - Math.floor(a / b) * result.y
+    };
+}
+
+function crt(aList, mList) {
+    if (aList.length !== mList.length) {
+        return { error: '余数数组和模数数组长度必须相同' };
+    }
+    if (aList.length === 0) {
+        return { error: '请输入至少一个同余式' };
     }
     
+    let M = 1;
+    for (let m of mList) M *= m;
+    
+    let result = 0;
+    for (let i = 0; i < aList.length; i++) {
+        let Mi = M / mList[i];
+        let inv = exgcdCRT(Mi, mList[i]);
+        if (inv.gcd !== 1) {
+            return { error: '模数 ' + mList[i] + ' 不互质' };
+        }
+        let x = (inv.x % mList[i] + mList[i]) % mList[i];
+        result = (result + aList[i] * Mi * x) % M;
+    }
+    
+    return { x: result, M: M };
+}
+
+function generateCRTDetails(aList, mList) {
+    let lines = [];
+    lines.push('📐 求解同余方程组：');
+    for (let i = 0; i < aList.length; i++) {
+        lines.push('  x ≡ ' + aList[i] + ' (mod ' + mList[i] + ')');
+    }
     lines.push('');
-    lines.push('✅ 结果：x = ' + result);
+    
+    const result = crt(aList, mList);
+    if (result.error) {
+        lines.push('❌ ' + result.error);
+        return lines;
+    }
+    
+    let M = 1;
+    for (let m of mList) M *= m;
+    
+    lines.push('计算过程：');
+    lines.push('  M = ' + mList.join(' × ') + ' = ' + M);
+    lines.push('');
+    
+    for (let i = 0; i < aList.length; i++) {
+        let Mi = M / mList[i];
+        let inv = exgcdCRT(Mi, mList[i]);
+        let x = (inv.x % mList[i] + mList[i]) % mList[i];
+        lines.push('  M' + (i+1) + ' = ' + M + '/' + mList[i] + ' = ' + Mi);
+        lines.push('  ' + Mi + ' × ' + x + ' ≡ 1 (mod ' + mList[i] + ')');
+        lines.push('  ' + aList[i] + ' × ' + Mi + ' × ' + x + ' = ' + (aList[i] * Mi * x));
+        lines.push('');
+    }
+    
+    lines.push('✅ 通解：x ≡ ' + result.x + ' (mod ' + result.M + ')');
+    lines.push('');
+    lines.push('💡 最小的正整数解：' + (result.x === 0 ? result.M : result.x));
+    
     return lines;
+}
+
+// ==================== 费马小定理 / 欧拉定理 ====================
+
+function fermatAccel(a, exp, mod) {
+    if (mod === 1) return 0;
+    if (mod <= 0) return { error: '模数必须为正整数' };
+    if (a === 0) return 0;
+    
+    let base = ((a % mod) + mod) % mod;
+    
+    // 检查是否互质
+    let g = gcd(base, mod);
+    let phi = eulerPhi(mod);
+    
+    let details = [];
+    details.push('📐 计算 ' + a + '^' + exp + ' mod ' + mod);
+    details.push('');
+    details.push('gcd(' + base + ', ' + mod + ') = ' + g);
+    
+    if (g === 1) {
+        // 互质，可以用欧拉定理
+        details.push('✅ 互质，使用欧拉定理');
+        details.push('φ(' + mod + ') = ' + phi);
+        
+        // 费马小定理特例：mod 是质数
+        if (isPrime(mod)) {
+            details.push('💡 ' + mod + ' 是质数，可用费马小定理');
+            details.push('  ' + base + '^(' + mod + '-1) ≡ 1 (mod ' + mod + ')');
+            details.push('  ' + base + '^' + (mod-1) + ' ≡ 1 (mod ' + mod + ')');
+        }
+        
+        let newExp = exp % phi;
+        details.push('');
+        details.push('指数化简：' + exp + ' mod ' + phi + ' = ' + newExp);
+        details.push('计算 ' + base + '^' + newExp + ' mod ' + mod);
+        
+        let result = fastPow(base, newExp, mod);
+        details.push('✅ 结果：' + result);
+        return { result: result, details: details.join('\n') };
+    } else {
+        // 不互质，直接快速幂
+        details.push('⚠️ 不互质，不能使用欧拉定理');
+        details.push('直接使用快速幂计算');
+        let result = fastPow(base, exp, mod);
+        details.push('✅ 结果：' + result);
+        return { result: result, details: details.join('\n') };
+    }
 }
 
 // ==================== 不定方程 ====================
 function exgcd(a, b) {
-    if (b === 0) {
-        return { gcd: Math.abs(a), x: 1, y: 0 };
-    }
+    if (b === 0) return { gcd: Math.abs(a), x: 1, y: 0 };
     const result = exgcd(b, a % b);
     return {
         gcd: result.gcd,
@@ -350,12 +406,12 @@ function formatEquationResult(result) {
 }
 
 // ==================== 计算函数 ====================
+
 async function calculateGCD() {
     const input = document.getElementById('gcdInput').value;
     const numbers = input.trim().split(/\s+/).map(Number);
     if (numbers.some(isNaN) || numbers.length === 0) {
-        showResult('请输入有效的整数！', true);
-        return;
+        showResult('请输入有效的整数！', true); return;
     }
     updateStatus('正在计算 GCD...');
     const result = await callBackend('gcd', { numbers: numbers });
@@ -367,8 +423,7 @@ async function calculateLCM() {
     const input = document.getElementById('lcmInput').value;
     const numbers = input.trim().split(/\s+/).map(Number);
     if (numbers.some(isNaN) || numbers.length === 0) {
-        showResult('请输入有效的整数！', true);
-        return;
+        showResult('请输入有效的整数！', true); return;
     }
     updateStatus('正在计算 LCM...');
     const result = await callBackend('lcm', { numbers: numbers });
@@ -380,8 +435,7 @@ async function calculatePrime() {
     const input = document.getElementById('primeInput').value;
     const numbers = input.trim().split(/\s+/).map(Number);
     if (numbers.some(isNaN) || numbers.length === 0) {
-        showResult('请输入有效的整数！', true);
-        return;
+        showResult('请输入有效的整数！', true); return;
     }
     updateStatus('正在判断质数...');
     const result = await callBackend('prime', { numbers: numbers });
@@ -400,29 +454,13 @@ async function calculatePrime() {
     }
 }
 
-// 欧拉函数
 async function calculatePhi() {
     const input = document.getElementById('phiInput').value.trim();
-    
-    if (!input) {
-        showResult('请输入 n！', true);
-        return;
-    }
-    
+    if (!input) { showResult('请输入 n！', true); return; }
     const n = parseInt(input);
-    
-    if (isNaN(n)) {
-        showResult('请输入有效的整数！', true);
-        return;
-    }
-    
-    if (n <= 0) {
-        showResult('请输入正整数！', true);
-        return;
-    }
-    
+    if (isNaN(n)) { showResult('请输入有效的整数！', true); return; }
+    if (n <= 0) { showResult('请输入正整数！', true); return; }
     updateStatus('正在计算 φ(' + n + ')...');
-    
     try {
         const result = await callBackend('phi', { n: n });
         if (result.success) {
@@ -440,38 +478,20 @@ async function calculatePhi() {
     }
 }
 
-// 模幂
 async function calculateModPow() {
     const nInput = document.getElementById('modpowN').value.trim();
     const mInput = document.getElementById('modpowM').value.trim();
     const bInput = document.getElementById('modpowB').value.trim();
-    
     if (!nInput || !mInput || !bInput) {
-        showResult('请完整填写 n、m、b！', true);
-        return;
+        showResult('请完整填写 n、m、b！', true); return;
     }
-    
-    const n = parseInt(nInput);
-    const m = parseInt(mInput);
-    const b = parseInt(bInput);
-    
+    const n = parseInt(nInput), m = parseInt(mInput), b = parseInt(bInput);
     if (isNaN(n) || isNaN(m) || isNaN(b)) {
-        showResult('请输入有效的整数！', true);
-        return;
+        showResult('请输入有效的整数！', true); return;
     }
-    
-    if (b <= 0) {
-        showResult('模数 b 必须为正整数！', true);
-        return;
-    }
-    
-    if (m < 0) {
-        showResult('指数 m 必须为非负整数！', true);
-        return;
-    }
-    
+    if (b <= 0) { showResult('模数 b 必须为正整数！', true); return; }
+    if (m < 0) { showResult('指数 m 必须为非负整数！', true); return; }
     updateStatus('正在计算模幂...');
-    
     try {
         const result = await callBackend('modpow', { n: n, m: m, b: b });
         if (result.success) {
@@ -489,7 +509,85 @@ async function calculateModPow() {
     }
 }
 
-// 不定方程
+// CRT 计算
+async function calculateCRT() {
+    const aInput = document.getElementById('crtA').value.trim();
+    const mInput = document.getElementById('crtM').value.trim();
+    
+    if (!aInput || !mInput) {
+        showResult('请填写完整的余数和模数！', true); return;
+    }
+    
+    const aList = aInput.split(',').map(s => parseInt(s.trim()));
+    const mList = mInput.split(',').map(s => parseInt(s.trim()));
+    
+    if (aList.some(isNaN) || mList.some(isNaN)) {
+        showResult('请输入有效的整数！', true); return;
+    }
+    
+    if (aList.length !== mList.length) {
+        showResult('余数和模数的数量必须相同！', true); return;
+    }
+    
+    updateStatus('正在求解 CRT...');
+    
+    try {
+        const result = await callBackend('crt', { a: aList, m: mList });
+        if (result.success) {
+            const details = generateCRTDetails(aList, mList);
+            showResult(details.join('\n'));
+            updateStatus('计算完成！');
+        } else {
+            showResult('错误：' + result.error, true);
+            updateStatus('计算失败', true);
+        }
+    } catch (error) {
+        const details = generateCRTDetails(aList, mList);
+        showResult(details.join('\n'));
+        updateStatus('使用 JavaScript 引擎计算完成');
+    }
+}
+
+// 费马定理计算
+async function calculateFermat() {
+    const aInput = document.getElementById('fermatA').value.trim();
+    const expInput = document.getElementById('fermatExp').value.trim();
+    const modInput = document.getElementById('fermatMod').value.trim();
+    
+    if (!aInput || !expInput || !modInput) {
+        showResult('请完整填写 a、指数、模数！', true); return;
+    }
+    
+    const a = parseInt(aInput), exp = parseInt(expInput), mod = parseInt(modInput);
+    if (isNaN(a) || isNaN(exp) || isNaN(mod)) {
+        showResult('请输入有效的整数！', true); return;
+    }
+    if (mod <= 0) { showResult('模数必须为正整数！', true); return; }
+    if (exp < 0) { showResult('指数必须为非负整数！', true); return; }
+    
+    updateStatus('正在使用费马定理加速计算...');
+    
+    try {
+        const result = await callBackend('fermat', { a: a, exp: exp, mod: mod });
+        if (result.success) {
+            showResult(result.details || '结果：' + result.result);
+            updateStatus('计算完成！');
+        } else {
+            showResult('错误：' + result.error, true);
+            updateStatus('计算失败', true);
+        }
+    } catch (error) {
+        const fResult = fermatAccel(a, exp, mod);
+        if (fResult.error) {
+            showResult('错误：' + fResult.error, true);
+            updateStatus('计算失败', true);
+        } else {
+            showResult(fResult.details);
+            updateStatus('使用 JavaScript 引擎计算完成');
+        }
+    }
+}
+
 async function calculateEquation() {
     const input = document.getElementById('equationInput').value.trim();
     if (!input) { showResult('请输入方程！', true); return; }
@@ -540,7 +638,6 @@ async function calculateEquation() {
     }
 }
 
-// 计算器
 async function calculateExpression() {
     const expression = document.getElementById('calcInput').value.trim();
     if (!expression) { showResult('请输入表达式！', true); return; }
@@ -571,5 +668,10 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('modpowN').addEventListener('keypress', e => { if (e.key === 'Enter') calculateModPow(); });
     document.getElementById('modpowM').addEventListener('keypress', e => { if (e.key === 'Enter') calculateModPow(); });
     document.getElementById('modpowB').addEventListener('keypress', e => { if (e.key === 'Enter') calculateModPow(); });
+    document.getElementById('crtA').addEventListener('keypress', e => { if (e.key === 'Enter') calculateCRT(); });
+    document.getElementById('crtM').addEventListener('keypress', e => { if (e.key === 'Enter') calculateCRT(); });
+    document.getElementById('fermatA').addEventListener('keypress', e => { if (e.key === 'Enter') calculateFermat(); });
+    document.getElementById('fermatExp').addEventListener('keypress', e => { if (e.key === 'Enter') calculateFermat(); });
+    document.getElementById('fermatMod').addEventListener('keypress', e => { if (e.key === 'Enter') calculateFermat(); });
     updateStatus('就绪');
 });
