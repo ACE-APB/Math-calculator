@@ -528,4 +528,48 @@ async function calculateEquation() {
         }
         const result = await callBackend('equation', { a: a, b: b, c: c });
         if (result.success) {
-            showResult(format
+            showResult(formatEquationResult(result));
+            updateStatus('求解完成！');
+        } else {
+            showResult('错误：' + result.error, true);
+            updateStatus('求解失败', true);
+        }
+    } catch (error) {
+        showResult('解析错误：' + error.message, true);
+        updateStatus('解析失败', true);
+    }
+}
+
+// 计算器
+async function calculateExpression() {
+    const expression = document.getElementById('calcInput').value.trim();
+    if (!expression) { showResult('请输入表达式！', true); return; }
+    updateStatus('正在计算表达式...');
+    const result = await callBackend('calc', { expression: expression });
+    if (result.success) {
+        const value = result.result;
+        showResult(Number.isInteger(value) ? value.toString() : value.toFixed(4));
+        updateStatus('计算完成！');
+    } else {
+        showResult('错误：' + result.error, true);
+        updateStatus('计算失败', true);
+    }
+}
+
+// ==================== 事件绑定 ====================
+document.querySelectorAll('.menu-btn').forEach(btn => {
+    btn.addEventListener('click', function() { switchMode(this.dataset.mode); });
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('gcdInput').addEventListener('keypress', e => { if (e.key === 'Enter') calculateGCD(); });
+    document.getElementById('lcmInput').addEventListener('keypress', e => { if (e.key === 'Enter') calculateLCM(); });
+    document.getElementById('primeInput').addEventListener('keypress', e => { if (e.key === 'Enter') calculatePrime(); });
+    document.getElementById('phiInput').addEventListener('keypress', e => { if (e.key === 'Enter') calculatePhi(); });
+    document.getElementById('equationInput').addEventListener('keypress', e => { if (e.key === 'Enter') calculateEquation(); });
+    document.getElementById('calcInput').addEventListener('keydown', e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) calculateExpression(); });
+    document.getElementById('modpowN').addEventListener('keypress', e => { if (e.key === 'Enter') calculateModPow(); });
+    document.getElementById('modpowM').addEventListener('keypress', e => { if (e.key === 'Enter') calculateModPow(); });
+    document.getElementById('modpowB').addEventListener('keypress', e => { if (e.key === 'Enter') calculateModPow(); });
+    updateStatus('就绪');
+});
