@@ -33,16 +33,16 @@ h1 {
 /* ==================== 菜单 ==================== */
 .menu {
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr;
-    gap: 6px;
+    grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr 1fr;
+    gap: 5px;
     margin-bottom: 20px;
 }
 
 .menu-btn {
-    padding: 10px 6px;
+    padding: 8px 4px;
     border: none;
-    border-radius: 10px;
-    font-size: 13px;
+    border-radius: 8px;
+    font-size: 12px;
     font-weight: bold;
     cursor: pointer;
     transition: all 0.3s;
@@ -51,7 +51,7 @@ h1 {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 4px;
+    gap: 3px;
 }
 
 .menu-btn:hover {
@@ -68,15 +68,15 @@ h1 {
 
 .icon-math {
     display: inline-block;
-    width: 28px;
-    height: 28px;
-    line-height: 28px;
+    width: 24px;
+    height: 24px;
+    line-height: 24px;
     text-align: center;
     background: linear-gradient(135deg, #667eea, #764ba2);
     border-radius: 6px;
     color: white;
     font-weight: bold;
-    font-size: 16px;
+    font-size: 14px;
     font-family: 'Times New Roman', serif;
     font-style: italic;
     vertical-align: middle;
@@ -90,9 +90,10 @@ h1 {
 .icon-math.gcd { background: linear-gradient(135deg, #667eea, #764ba2); }
 .icon-math.lcm { background: linear-gradient(135deg, #f093fb, #f5576c); }
 .icon-math.prime { background: linear-gradient(135deg, #4facfe, #00f2fe); }
-.icon-math.modpow { background: linear-gradient(135deg, #43e97b, #38f9d7); color: #1a5a2a; }
-.icon-math.equation { background: linear-gradient(135deg, #fa709a, #fee140); color: #7a3a0a; }
-.icon-math.calc { background: linear-gradient(135deg, #a18cd1, #fbc2eb); color: #4a2a6a; }
+.icon-math.phi { background: linear-gradient(135deg, #43e97b, #38f9d7); color: #1a5a2a; }
+.icon-math.modpow { background: linear-gradient(135deg, #fa709a, #fee140); color: #7a3a0a; }
+.icon-math.equation { background: linear-gradient(135deg, #a18cd1, #fbc2eb); color: #4a2a6a; }
+.icon-math.calc { background: linear-gradient(135deg, #ffecd2, #fcb69f); color: #7a3a0a; }
 
 /* 悬停效果 */
 .icon-math:hover {
@@ -220,16 +221,16 @@ textarea {
 }
 
 /* ==================== 响应式 ==================== */
-@media (max-width: 650px) {
+@media (max-width: 750px) {
     .container { padding: 20px; }
-    .menu { grid-template-columns: 1fr 1fr 1fr; gap: 4px; }
-    .menu-btn { font-size: 12px; padding: 8px 4px; }
-    .icon-math { width: 22px; height: 22px; line-height: 22px; font-size: 13px; }
+    .menu { grid-template-columns: 1fr 1fr 1fr 1fr; gap: 4px; }
+    .menu-btn { font-size: 11px; padding: 6px 3px; }
+    .icon-math { width: 20px; height: 20px; line-height: 20px; font-size: 12px; }
 }
 
-@media (max-width: 400px) {
+@media (max-width: 450px) {
     .container { padding: 15px; }
-    .menu { grid-template-columns: 1fr 1fr; }
-    .menu-btn { font-size: 11px; padding: 6px 3px; }
-    .icon-math { width: 20px; height: 20px; line-height: 20px; font-size: 11px; }
+    .menu { grid-template-columns: 1fr 1fr 1fr; }
+    .menu-btn { font-size: 10px; padding: 5px 2px; }
+    .icon-math { width: 18px; height: 18px; line-height: 18px; font-size: 10px; }
 }
