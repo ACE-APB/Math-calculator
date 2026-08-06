@@ -37,6 +37,10 @@ function updateStatus(message, isError = false) {
 
 function showResult(value, isError = false, className = '') {
     const resultDiv = document.getElementById('resultValue');
+    // 🔧 修复：如果 value 是对象，转成字符串
+    if (typeof value === 'object' && value !== null) {
+        value = JSON.stringify(value);
+    }
     resultDiv.textContent = value;
     resultDiv.className = 'value' + (isError ? ' error' : '') + (className ? ' ' + className : '');
 }
@@ -75,9 +79,11 @@ function simulateCalculation(endpoint, data) {
     } else if (endpoint === 'modpow') {
         return { success: true, result: modPow(data.n, data.m, data.b) };
     } else if (endpoint === 'crt') {
-        return { success: true, result: crt(data.a, data.m) };
+        const result = crt(data.a, data.m);
+        return { success: true, ...result };
     } else if (endpoint === 'fermat') {
-        return { success: true, result: fermatAccel(data.a, data.exp, data.mod) };
+        const result = fermatAccel(data.a, data.exp, data.mod);
+        return { success: true, ...result };
     } else if (endpoint === 'equation') {
         const result = solveEquation(data.a, data.b, data.c);
         return { success: true, ...result };
@@ -191,18 +197,6 @@ function fastPow(base, exp, mod) {
     return result;
 }
 
-function findCycle(n, b) {
-    if (b === 1) return 0;
-    if (gcd(n, b) !== 1) return -1;
-    n = ((n % b) + b) % b;
-    let current = 1;
-    for (let i = 1; i <= b; i++) {
-        current = (current * n) % b;
-        if (current === 1) return i;
-    }
-    return -1;
-}
-
 function modPow(n, m, b) {
     if (b === 1) return 0;
     if (m === 0) return 1 % b;
@@ -224,9 +218,7 @@ function generateModPowDetails(n, m, b) {
     return lines;
 }
 
-// ==================== CRT 中国剩余定理 ====================
-
-// 扩展欧几里得（CRT专用）
+// ==================== CRT ====================
 function exgcdCRT(a, b) {
     if (b === 0) return { gcd: Math.abs(a), x: 1, y: 0 };
     const result = exgcdCRT(b, a % b);
@@ -300,51 +292,45 @@ function generateCRTDetails(aList, mList) {
     return lines;
 }
 
-// ==================== 费马小定理 / 欧拉定理 ====================
-
+// ==================== 费马定理 ====================
 function fermatAccel(a, exp, mod) {
-    if (mod === 1) return 0;
+    if (mod === 1) return { result: 0, details: '任何数 mod 1 = 0' };
     if (mod <= 0) return { error: '模数必须为正整数' };
-    if (a === 0) return 0;
+    if (a === 0) return { result: 0, details: '0 的任何次方 = 0' };
     
     let base = ((a % mod) + mod) % mod;
-    
-    // 检查是否互质
     let g = gcd(base, mod);
     let phi = eulerPhi(mod);
     
-    let details = [];
-    details.push('📐 计算 ' + a + '^' + exp + ' mod ' + mod);
-    details.push('');
-    details.push('gcd(' + base + ', ' + mod + ') = ' + g);
+    let lines = [];
+    lines.push('📐 计算 ' + a + '^' + exp + ' mod ' + mod);
+    lines.push('');
+    lines.push('gcd(' + base + ', ' + mod + ') = ' + g);
     
     if (g === 1) {
-        // 互质，可以用欧拉定理
-        details.push('✅ 互质，使用欧拉定理');
-        details.push('φ(' + mod + ') = ' + phi);
+        lines.push('✅ 互质，使用欧拉定理');
+        lines.push('φ(' + mod + ') = ' + phi);
         
-        // 费马小定理特例：mod 是质数
         if (isPrime(mod)) {
-            details.push('💡 ' + mod + ' 是质数，可用费马小定理');
-            details.push('  ' + base + '^(' + mod + '-1) ≡ 1 (mod ' + mod + ')');
-            details.push('  ' + base + '^' + (mod-1) + ' ≡ 1 (mod ' + mod + ')');
+            lines.push('💡 ' + mod + ' 是质数，可用费马小定理');
+            lines.push('  ' + base + '^(' + mod + '-1) ≡ 1 (mod ' + mod + ')');
+            lines.push('  ' + base + '^' + (mod-1) + ' ≡ 1 (mod ' + mod + ')');
         }
         
         let newExp = exp % phi;
-        details.push('');
-        details.push('指数化简：' + exp + ' mod ' + phi + ' = ' + newExp);
-        details.push('计算 ' + base + '^' + newExp + ' mod ' + mod);
+        lines.push('');
+        lines.push('指数化简：' + exp + ' mod ' + phi + ' = ' + newExp);
+        lines.push('计算 ' + base + '^' + newExp + ' mod ' + mod);
         
         let result = fastPow(base, newExp, mod);
-        details.push('✅ 结果：' + result);
-        return { result: result, details: details.join('\n') };
+        lines.push('✅ 结果：' + result);
+        return { result: result, details: lines.join('\n') };
     } else {
-        // 不互质，直接快速幂
-        details.push('⚠️ 不互质，不能使用欧拉定理');
-        details.push('直接使用快速幂计算');
+        lines.push('⚠️ 不互质，不能使用欧拉定理');
+        lines.push('直接使用快速幂计算');
         let result = fastPow(base, exp, mod);
-        details.push('✅ 结果：' + result);
-        return { result: result, details: details.join('\n') };
+        lines.push('✅ 结果：' + result);
+        return { result: result, details: lines.join('\n') };
     }
 }
 
@@ -538,7 +524,7 @@ async function calculateCRT() {
             showResult(details.join('\n'));
             updateStatus('计算完成！');
         } else {
-            showResult('错误：' + result.error, true);
+            showResult('错误：' + (result.error || '未知错误'), true);
             updateStatus('计算失败', true);
         }
     } catch (error) {
@@ -555,28 +541,46 @@ async function calculateFermat() {
     const modInput = document.getElementById('fermatMod').value.trim();
     
     if (!aInput || !expInput || !modInput) {
-        showResult('请完整填写 a、指数、模数！', true); return;
+        showResult('请完整填写 a、指数、模数！', true);
+        return;
     }
     
-    const a = parseInt(aInput), exp = parseInt(expInput), mod = parseInt(modInput);
+    const a = parseInt(aInput);
+    const exp = parseInt(expInput);
+    const mod = parseInt(modInput);
+    
     if (isNaN(a) || isNaN(exp) || isNaN(mod)) {
-        showResult('请输入有效的整数！', true); return;
+        showResult('请输入有效的整数！', true);
+        return;
     }
-    if (mod <= 0) { showResult('模数必须为正整数！', true); return; }
-    if (exp < 0) { showResult('指数必须为非负整数！', true); return; }
+    if (mod <= 0) {
+        showResult('模数必须为正整数！', true);
+        return;
+    }
+    if (exp < 0) {
+        showResult('指数必须为非负整数！', true);
+        return;
+    }
     
     updateStatus('正在使用费马定理加速计算...');
     
     try {
         const result = await callBackend('fermat', { a: a, exp: exp, mod: mod });
+        
         if (result.success) {
-            showResult(result.details || '结果：' + result.result);
+            // 如果返回了 details 字段，显示详细信息
+            if (result.details) {
+                showResult(result.details);
+            } else {
+                showResult('✅ 结果：' + result.result);
+            }
             updateStatus('计算完成！');
         } else {
-            showResult('错误：' + result.error, true);
+            showResult('错误：' + (result.error || '未知错误'), true);
             updateStatus('计算失败', true);
         }
     } catch (error) {
+        // 使用 JavaScript 引擎
         const fResult = fermatAccel(a, exp, mod);
         if (fResult.error) {
             showResult('错误：' + fResult.error, true);
