@@ -88,6 +88,34 @@ vector<int> filterPrimes(const vector<int>& numbers) {
 }
 
 // ================================================================
+// ==================== 欧拉函数 ================================
+// ================================================================
+
+// 欧拉函数 - 优化法（质因数分解）
+int eulerPhi(int n) {
+    if (n <= 0) return 0;
+    if (n == 1) return 1;
+    
+    int result = n;
+    int num = n;
+    
+    for (int p = 2; p * p <= num; p++) {
+        if (num % p == 0) {
+            while (num % p == 0) {
+                num /= p;
+            }
+            result -= result / p;
+        }
+    }
+    
+    if (num > 1) {
+        result -= result / num;
+    }
+    
+    return result;
+}
+
+// ================================================================
 // ==================== 模幂运算 ================================
 // ================================================================
 
@@ -437,6 +465,18 @@ bool parseEquationParams(const string& json, int& a, int& b, int& c) {
     }
 }
 
+bool parsePhiParams(const string& json, int& n) {
+    size_t nPos = json.find("\"n\":");
+    if (nPos == string::npos) return false;
+    
+    try {
+        n = stoi(json.substr(nPos + 4));
+        return true;
+    } catch (...) {
+        return false;
+    }
+}
+
 // ================================================================
 // ==================== 主函数 ================================
 // ================================================================
@@ -495,6 +535,33 @@ int main() {
                 vector<int> primes = filterPrimes(numbers);
                 res.set_content(createJsonResponseArray(true, primes), "application/json");
             }
+        } catch (const exception& e) {
+            res.set_content(createJsonResponse(false, 0, e.what()), "application/json");
+        }
+    });
+
+    // Phi API - 欧拉函数
+    svr.Post("/phi", [](const httplib::Request& req, httplib::Response& res) {
+        try {
+            int n;
+            if (!parsePhiParams(req.body, n)) {
+                res.set_content(createJsonResponse(false, 0, "缺少参数 n"), "application/json");
+                return;
+            }
+            
+            if (n <= 0) {
+                res.set_content(createJsonResponse(false, 0, "n 必须为正整数"), "application/json");
+                return;
+            }
+            
+            int result = eulerPhi(n);
+            
+            stringstream ss;
+            ss << "{";
+            ss << "\"success\":true,";
+            ss << "\"result\":" << result;
+            ss << "}";
+            res.set_content(ss.str(), "application/json");
         } catch (const exception& e) {
             res.set_content(createJsonResponse(false, 0, e.what()), "application/json");
         }
@@ -594,6 +661,7 @@ int main() {
     cout << "📐 GCD API:        POST /gcd" << endl;
     cout << "📏 LCM API:        POST /lcm" << endl;
     cout << "🔢 Prime API:      POST /prime" << endl;
+    cout << "φ  Phi API:        POST /phi" << endl;
     cout << "⚡ ModPow API:     POST /modpow" << endl;
     cout << "📝 Equation API:   POST /equation" << endl;
     cout << "🧮 Calculator API: POST /calc" << endl;
