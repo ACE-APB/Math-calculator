@@ -1,5 +1,5 @@
 # Math-calculator
 Welcome use Math-calculator
 
-### V0.0.1 (Official)
+### V1.0.0
 This project is made by ACE-APB (me) & DeepSeek.
